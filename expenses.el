@@ -52,6 +52,7 @@
     (with-temp-buffer
       (insert (format "#+TITLE: Expenses for %s %s\n\n" month year))
       (insert "* Expenses\n")
+      (insert "#+TBLNAME: expenses\n")
       (insert "|--|--|--|--|\n")
       (insert "|Date |Amount | Category | Details |\n")
       (insert "|--|--|--|--|\n")
@@ -90,6 +91,28 @@
       (let ((month (format-time-string "%B" (org-time-string-to-seconds date)))
 	    (year (format-time-string "%Y" (org-time-string-to-seconds date))))
 	(message "No expense file is found for %s %s" month year)))))
+
+(defun expenses-calc-expense ()
+  "Calculate expense."
+  (interactive)
+  (let* ((date (org-read-date nil nil nil "Date: "))
+	 (file-name (expenses--get-file-name date))
+	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
+	 (year (format-time-string "%Y" (org-time-string-to-seconds date))))
+    (if (file-exists-p file-name)
+	(with-temp-buffer
+	  (insert-buffer-substring (find-file-noselect file-name))
+	  (goto-char (point-max))
+	  (insert "|||||\n")
+	  (insert "#+TBLFM: @>$2 = vsum(@2..@-1)")
+	  (org-table-calc-current-TBLFM)
+	  (forward-line -1)
+	  (org-table-goto-column 2)
+	  (let* ((line-at-point (thing-at-point 'line))
+		 (tot-expense (string-trim (nth 0 (split-string line-at-point "|" t)))))
+	    (message (format "Total expense for %s %s is %s" month year tot-expense))))
+      (message "No expense file is found for %s %s" month year))))
+
 
 (provide 'expenses)
 ;;; expenses.el ends here
