@@ -1,0 +1,6 @@
+#+TITLE: Expenses
+#+AUTHOR: Md Arif Shaikh
+#+EMAIL: arifshaikh.astro@gmail.com
+
+* Expenses
+~Expenses~ is an ~Emacs~ package to keep a record of your expenses.
