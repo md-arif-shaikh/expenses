@@ -74,11 +74,22 @@
     (when (string-equal (completing-read "Add another expense: " '("no" "yes")) "yes")
       (expenses-add-expense))
     (with-temp-buffer
-      (switch-to-buffer (find-file-noselect file-name))
+      (set-buffer (find-file-noselect file-name))
       (goto-char (point-max))
       (forward-line -1)
       (org-table-align)
-      (write-region (point-min) (point-max) file-name))))
+      (write-file file-name))))
+
+(defun expenses-view-expense ()
+  "View expense."
+  (interactive)
+  (let* ((date (org-read-date nil nil nil "Date: "))
+	 (file-name (expenses--get-file-name date)))
+    (if (file-exists-p file-name)
+	(find-file-other-window file-name)
+      (let ((month (format-time-string "%B" (org-time-string-to-seconds date)))
+	    (year (format-time-string "%Y" (org-time-string-to-seconds date))))
+	(message "No expense file is found for %s %s" month year)))))
 
 (provide 'expenses)
 ;;; expenses.el ends here
