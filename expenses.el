@@ -78,7 +78,7 @@
   :group 'expenses)
 
 (setq expenses-directory "~/Dropbox/Important_Works/Different Expenses/Monthly expenses/")
-(setq expenses-category-list '("Grocery" "Shopping" "Travel" "Entertainment" "Rent" "Salary" "Others"))
+(setq expenses-category-list '("Grocery" "Shopping" "Travel" "Subscription" "Health" "Electronics" "Entertainment" "Rent" "Salary" "Others"))
 (setq expenses-currency "Rs.")
 (setq expenses-month-names '("Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
 
@@ -199,8 +199,8 @@ month in format YYYY-MM-DD"
       ("expenses" . ,expenses)
       ("total" . ,total-expense))))
 
-(defun expenses-calc-expense-for-year (year &optional start end)
-  "Calculate expenses for a YEAR."
+(defun expenses-calc-expense-for-months (year &optional start end)
+  "Calculate expenses for months between START and END of a YEAR."
   (interactive
    (let* ((current-year (string-to-number (format-time-string "%Y")))
 	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num))))
@@ -236,6 +236,14 @@ month in format YYYY-MM-DD"
       (insert (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
       (align-regexp (point-min) (point-max) "\\(\\s-*\\)="))
     (switch-to-buffer-other-window buffer-name)))
+
+(defun expenses-calc-expense-for-year (year)
+  "Calculate expenses in a YEAR."
+  (interactive
+   (let* ((current-year (string-to-number (format-time-string "%Y")))
+	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num)))))
+     (list picked-year)))
+  (expenses-calc-expense-for-months year))
 
 (provide 'expenses)
 ;;; expenses.el ends here
