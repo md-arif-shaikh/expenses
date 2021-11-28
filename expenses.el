@@ -35,8 +35,14 @@
   :type 'list
   :group 'expenses)
 
+(defcustom expenses-currency nil
+  "Currency."
+  :type 'string
+  :group 'expenses)
+
 (setq expenses-directory "~/Dropbox/Important_Works/Different Expenses/Monthly expenses/")
 (setq expenses-category-list '("Grocery" "Shopping" "Travel" "Entertainment" "Rent" "Salary" "Others"))
+(setq expenses-currency "Rs.")
 
 (defun expenses--get-file-name (date)
   "Get the name of file from the date."
@@ -92,27 +98,36 @@
 	    (year (format-time-string "%Y" (org-time-string-to-seconds date))))
 	(message "No expense file is found for %s %s" month year)))))
 
+(defun expenses--goto-table-end (name)
+  "Go to end of table named NAME if point is not in any table."
+  (unless (org-at-table-p)
+    (let ((org-babel-results-keyword "NAME"))
+      (org-babel-goto-named-result name)
+      (forward-line 2)
+      (goto-char (org-table-end)))))
+
+(defun expenses--cal-expense (file-name)
+  "Calculate expenses for given FILE-NAME."
+  (with-temp-buffer
+    (insert-buffer-substring (find-file-noselect file-name))
+    (expenses--goto-table-end "expenses")
+    (forward-line)
+    (insert "|||||\n")
+    (insert "#+TBLFM: @>$2 = vsum(@2..@-1)")
+    (org-table-calc-current-TBLFM)
+    (forward-line -1)
+    (string-trim (org-table-get-field 2))))
+
 (defun expenses-calc-expense ()
   "Calculate expense."
-  (interactive)
+  (interactive) 
   (let* ((date (org-read-date nil nil nil "Date: "))
 	 (file-name (expenses--get-file-name date))
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date))))
     (if (file-exists-p file-name)
-	(with-temp-buffer
-	  (insert-buffer-substring (find-file-noselect file-name))
-	  (goto-char (point-max))
-	  (insert "|||||\n")
-	  (insert "#+TBLFM: @>$2 = vsum(@2..@-1)")
-	  (org-table-calc-current-TBLFM)
-	  (forward-line -1)
-	  (org-table-goto-column 2)
-	  (let* ((line-at-point (thing-at-point 'line))
-		 (tot-expense (string-trim (nth 0 (split-string line-at-point "|" t)))))
-	    (message (format "Total expense for %s %s is %s" month year tot-expense))))
-      (message "No expense file is found for %s %s" month year))))
-
+	(message (format "Total expenses for %s %s is %s %s" month year (or expenses-currency "") (expenses--cal-expense file-name)))
+    (message "No expense file is found for %s %s" month year))))
 
 (provide 'expenses)
 ;;; expenses.el ends here
