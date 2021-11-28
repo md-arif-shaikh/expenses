@@ -24,6 +24,7 @@
 
 ;;; Code:
 (require 'org)
+(require 'dash)
 
 (defcustom expenses-directory nil
   "Directory to save and look for the expense files."
@@ -40,9 +41,46 @@
   :type 'string
   :group 'expenses)
 
+(defcustom expenses-month-names nil
+  "Month names."
+  :type 'list
+  :group 'expenses)
+
+(defvar expenses-color--expense "#98C379"
+  "Color to indicate a expense.")
+(defvar expenses-color--date "#BE5046"
+  "Color to indicate a date.")
+(defvar expenses-color--message "#E5C07B"
+  "Color for message.")
+
+(defface expenses-face-expense
+  `((t :foreground ,expenses-color--expense
+       :weight extra-bold
+       :box nil
+       :underline nil))
+  "Face for expense."
+  :group 'expenses)
+
+(defface expenses-face-date
+  `((t :foreground ,expenses-color--date
+       :weight extra-bold
+       :box nil
+       :underline nil))
+  "Face for date."
+  :group 'expenses)
+
+(defface expenses-face-message
+  `((t :foreground ,expenses-color--message
+       :weight extra-bold
+       :box nil
+       :underline nil))
+  "Face for message."
+  :group 'expenses)
+
 (setq expenses-directory "~/Dropbox/Important_Works/Different Expenses/Monthly expenses/")
 (setq expenses-category-list '("Grocery" "Shopping" "Travel" "Entertainment" "Rent" "Salary" "Others"))
 (setq expenses-currency "Rs.")
+(setq expenses-month-names '("Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
 
 (defun expenses--get-file-name (date)
   "Get the name of file from the date."
@@ -106,11 +144,11 @@
       (forward-line 2)
       (goto-char (org-table-end)))))
 
-(defun expenses--cal-expense (file-name)
+(defun expenses--get-expense-for-file (file-name &optional table-name)
   "Calculate expenses for given FILE-NAME."
   (with-temp-buffer
     (insert-buffer-substring (find-file-noselect file-name))
-    (expenses--goto-table-end "expenses")
+    (expenses--goto-table-end (or table-name "expenses"))
     (forward-line)
     (insert "|||||\n")
     (insert "#+TBLFM: @>$2 = vsum(@2..@-1)")
@@ -118,16 +156,86 @@
     (forward-line -1)
     (string-trim (org-table-get-field 2))))
 
-(defun expenses-calc-expense ()
-  "Calculate expense."
-  (interactive) 
-  (let* ((date (org-read-date nil nil nil "Date: "))
-	 (file-name (expenses--get-file-name date))
-	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
-	 (year (format-time-string "%Y" (org-time-string-to-seconds date))))
+(defun expenses--get-expense-for-month (date)
+  "Calculate expense for a month specified by any DATE in that
+month in format YYYY-MM-DD"
+  (let* ((file-name (expenses--get-file-name date)))
     (if (file-exists-p file-name)
-	(message (format "Total expenses for %s %s is %s %s" month year (or expenses-currency "") (expenses--cal-expense file-name)))
-    (message "No expense file is found for %s %s" month year))))
+	(expenses--get-expense-for-file file-name)
+      nil)))
+
+(defun expenses-calc-expense-for-month (date)
+  "Calculate expense for a month specified by any DATE in that
+month in format YYYY-MM-DD"
+  (interactive
+   (let ((date (org-read-date nil nil nil "Date: ")))
+     (list date)))
+  (let* ((month (format-time-string "%B" (org-time-string-to-seconds date)))
+	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
+	 (expenses (expenses--get-expense-for-month date)))
+    (if expenses
+	(message (format "%s %s %s = %s %s"
+			 (propertize "Total expenses for" 'face 'expenses-face-message)
+			 (propertize month 'face 'expenses-face-date)
+			 (propertize year 'face 'expenses-face-date)
+			 (or expenses-currency "")
+			 (propertize expenses 'face 'expenses-face-expense)))
+      (message (format "%s %s %s"
+		       (propertize "No expense file is found for" 'face 'expenses-face-message)
+		       (propertize month 'face 'expenses-face-date)
+		       (propertize year 'face 'expenses-face-date))))))
+
+(defun expenses--get-expense-for-year (year &optional start end)
+  "Calculate expenses for a YEAR with optional arguments START month and END month.
+ START and END should be 1-12"
+  (let* ((expenses-list (cl-loop for n in (number-sequence (or start 1) (or end 12))
+				      collect (let* ((date (format "%s-%02d-01" year n))
+						     (month (format-time-string "%B" (org-time-string-to-seconds date))))
+						(cons month (expenses--get-expense-for-month date)))))
+	 (months (mapcar 'car expenses-list))
+	 (expenses (mapcar 'cdr expenses-list))
+	 (total-expense (-sum (-map-when 'stringp 'string-to-number (-replace nil 0 expenses)))))
+    `(("months" . ,months)
+      ("expenses" . ,expenses)
+      ("total" . ,total-expense))))
+
+(defun expenses-calc-expense-for-year (year &optional start end)
+  "Calculate expenses for a YEAR."
+  (interactive
+   (let* ((current-year (string-to-number (format-time-string "%Y")))
+	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num))))
+	  (picked-start (1+ (-elem-index (completing-read "Start month: " expenses-month-names) expenses-month-names)))
+	  (picked-end (1+ (-elem-index (completing-read "End month: " expenses-month-names) expenses-month-names))))
+     (list picked-year picked-start picked-end)))
+  (let* ((expense-alist (expenses--get-expense-for-year year start end))
+	 (months (cdr (assoc "months" expense-alist)))
+	 (expenses (cdr (assoc "expenses" expense-alist)))
+	 (total (cdr (assoc "total" expense-alist)))
+	 (num-res (length months))
+	 (message-strings (cl-loop for n from 0 to (1- num-res)
+				  collect (let ((month (nth n months))
+						(expense (nth n expenses)))
+					    (format "%s = %s %s"
+						    (propertize month 'face 'expenses-face-date)
+						    expenses-currency
+						    (if (stringp expense)
+							(propertize expense 'face 'expenses-face-expense)
+						      expense)))))
+	 (buffer-name (concat "*Expenses: " year "*")))
+    (generate-new-buffer buffer-name)
+    (with-current-buffer buffer-name
+      (insert (propertize "---------------------------------\n" 'face 'expenses-face-message))
+      (insert (propertize (format "   Expenses for the year %s\n" year) 'face 'expenses-face-message))
+      (insert (propertize "---------------------------------\n" 'face 'expenses-face-message))
+      (insert (string-join message-strings "\n"))
+      (insert (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
+      (insert (format "%s = %s %s"
+		      (propertize "Total" 'face 'expenses-face-date)
+		      expenses-currency
+		      (propertize (number-to-string total) 'face 'expenses-face-expense)))
+      (insert (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
+      (align-regexp (point-min) (point-max) "\\(\\s-*\\)="))
+    (switch-to-buffer-other-window buffer-name)))
 
 (provide 'expenses)
 ;;; expenses.el ends here
