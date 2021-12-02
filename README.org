@@ -8,9 +8,9 @@
 - [[#screenshots][Screenshots]]
 
 * About Expenses
-~Expenses~ is an ~Emacs~ package to keep a record of your expenses and view expenses by month or year.
+~Expenses~ is an ~Emacs~ package to keep a record of your expenses and view expenses by given date/month/months/year.
 The expenses are saved in an ~org-table~ inside an ~org~ file. For each month a separate ~org~ file is
-created with the year and month name as a prefix to the file names.
+created with the year and month as a prefix to the file names.
 
 To calculate the expenses, it uses the table formulas that exists for ~org-table~.
 
