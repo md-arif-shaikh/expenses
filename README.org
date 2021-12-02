@@ -12,20 +12,22 @@
 The expenses are saved in an ~org-table~ inside an ~org~ file. For each month a separate ~org~ file is
 created with the year and month name as a prefix to the file names.
 
-To calculate the expenses, it uses the table formula method that exists for ~org-table~.
+To calculate the expenses, it uses the table formulas that exists for ~org-table~.
 
 * How to use it
-|---------------------------------+-------------------------------|
-| interactive functions           | Actions                       |
-|---------------------------------+-------------------------------|
-| ~expenses-add-expense~            | Add an expense entry          |
-|---------------------------------+-------------------------------|
-| ~expenses-view-expense~           | View expense file             |
-|---------------------------------+-------------------------------|
-| ~expenses-calc-expense-for-day~   | Calculate expenses in a day   |
-|---------------------------------+-------------------------------|
-| ~expenses-calc-expense-for-month~ | Calculate expenses in a month |
-|---------------------------------+-------------------------------|
-| ~expenses-calc-expense-for-year~  | Calculate expenses in a year  |
-|---------------------------------+-------------------------------|
+|----------------------------------+-----------------------------------------|
+| Interactive functions            | Actions                                 |
+|----------------------------------+-----------------------------------------|
+| ~expenses-add-expense~             | Add an expense entry                    |
+|----------------------------------+-----------------------------------------|
+| ~expenses-view-expense~            | View expense file                       |
+|----------------------------------+-----------------------------------------|
+| ~expenses-calc-expense-for-day~    | Calculate expenses in a day             |
+|----------------------------------+-----------------------------------------|
+| ~expenses-calc-expense-for-month~  | Calculate expenses in a month           |
+|----------------------------------+-----------------------------------------|
+| ~expenses-calc-expense-for-months~ | Calculate expenses in a range of months |
+|----------------------------------+-----------------------------------------|
+| ~expenses-calc-expense-for-year~   | Calculate expenses in a year            |
+|----------------------------------+-----------------------------------------|
 * Screenshots

@@ -4,6 +4,10 @@
 
 ;; Author: Md Arif Shaikh <arifshaikh.astro@gmail.com>
 ;; Keywords: expense tracking
+;; Version: 0.0.1
+;; Homepage: https://github.com/md-arif-shaikh/expenses
+;; URL: https://github.com/md-arif-shaikh/expenses
+;; Package-Requires: ((emacs "26.1") (dash "2.19.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -83,7 +87,7 @@
 (setq expenses-month-names '("Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
 
 (defun expenses--get-file-name (date)
-  "Get the name of file from the date."
+  "Get the name of file from the DATE."
   (let ((year-month (substring date 0 7)))
     (concat expenses-directory year-month "-" "expenses.org")))
 
@@ -145,7 +149,7 @@
       (goto-char (org-table-end)))))
 
 (defun expenses--get-expense-for-file (file-name &optional table-name)
-  "Calculate expenses for given FILE-NAME."
+  "Calculate expenses for given FILE-NAME and TABLE-NAME."
   (with-temp-buffer
     (insert-buffer-substring (find-file-noselect file-name))
     (expenses--goto-table-end (or table-name "expenses"))
@@ -156,17 +160,60 @@
     (forward-line -1)
     (string-trim (org-table-get-field 2))))
 
+(defun expenses--get-expense-filtered-by-date (dates amounts date-to-filter-with)
+  "Given DATES list and AMOUNTS list filter the AMOUNT list using DATE-TO-FILTER-WITH and return the sum of the filterd list."
+  (cl-loop for date in dates
+	   for amount in amounts
+	   if (equal date date-to-filter-with)
+	   collect amount into filtered-amounts
+	   finally return (-sum filtered-amounts)))
+
+(defun expenses--get-expense-for-day (date &optional table-name)
+  "Calculate expenses for a DATE and TABLE-NAME."
+  (let ((file-name (expenses--get-file-name date)))
+    (if (file-exists-p file-name)
+	(with-temp-buffer
+	  (insert-buffer-substring (find-file-noselect file-name))
+	  (expenses--goto-table-end (or table-name "expenses"))
+	  (forward-line)
+	  (insert "|||||\n")
+	  (insert (format "#+TBLFM: @>$2 = '(expenses--get-expense-filtered-by-date (split-string \"@2$1..@-1$1\" \" \") (list @2$2..@-1$2) \"%s\");L" date))
+	  (org-table-calc-current-TBLFM)
+	  (forward-line -1)
+	  (string-trim (org-table-get-field 2)))
+      nil)))
+
+(defun expenses-calc-expense-for-day (date &optional table-name)
+  "Calculate expense for DATE and TABLE-NAME and show message."
+  (interactive
+   (list (org-read-date nil nil nil "Date: ")))
+  (let* ((month (format-time-string "%B" (org-time-string-to-seconds date)))
+	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
+	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
+	 (expenses (expenses--get-expense-for-day date)))
+    (if expenses
+	(message (format "%s %s %s %s = %s %s"
+			 (propertize "Total expenses for" 'face 'expenses-face-message)
+			 (propertize month 'face 'expenses-face-date)
+			 (propertize day 'face 'expenses-face-date)
+			 (propertize year 'face 'expenses-face-date)
+			 (or expenses-currency "")
+			 (propertize expenses 'face 'expenses-face-expense)))
+      (message (format "%s %s %s %s"
+		       (propertize "No expense file is found for" 'face 'expenses-face-message)
+		       (propertize month 'face 'expenses-face-date)
+		       (propertize day 'face 'expenses-face-date)
+		       (propertize year 'face 'expenses-face-date))))))
+
 (defun expenses--get-expense-for-month (date)
-  "Calculate expense for a month specified by any DATE in that
-month in format YYYY-MM-DD"
+  "Calculate expense for a month specified by any DATE in that month in format YYYY-MM-DD."
   (let* ((file-name (expenses--get-file-name date)))
     (if (file-exists-p file-name)
 	(expenses--get-expense-for-file file-name)
       nil)))
 
 (defun expenses-calc-expense-for-month (date)
-  "Calculate expense for a month specified by any DATE in that
-month in format YYYY-MM-DD"
+  "Calculate expense for a month specified by any DATE in that month in format YYYY-MM-DD."
   (interactive
    (let ((date (org-read-date nil nil nil "Date: ")))
      (list date)))
@@ -186,8 +233,7 @@ month in format YYYY-MM-DD"
 		       (propertize year 'face 'expenses-face-date))))))
 
 (defun expenses--get-expense-for-year (year &optional start end)
-  "Calculate expenses for a YEAR with optional arguments START month and END month.
- START and END should be 1-12"
+  "Calculate expenses for a YEAR with optional arguments START month and END month START and END should be 1-12."
   (let* ((expenses-list (cl-loop for n in (number-sequence (or start 1) (or end 12))
 				      collect (let* ((date (format "%s-%02d-01" year n))
 						     (month (format-time-string "%B" (org-time-string-to-seconds date))))
@@ -244,42 +290,6 @@ month in format YYYY-MM-DD"
 	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num)))))
      (list picked-year)))
   (expenses-calc-expense-for-months year))
-
-(defun expenses-calc-expense-for-day (date &optional table-name)
-  "Get the expenses for a given DATE."
-  (interactive
-   (let ((date (org-read-date nil nil nil "Date: ")))
-     (list date)))
-  (let* ((buff-name (format "%s%s.org" (temporary-file-directory) date))
-	 (buff (generate-new-buffer buff-name)))
-    (with-current-buffer buff
-      (insert-buffer-substring (find-file-noselect (expenses--get-file-name date)))
-      (goto-char (point-max))
-      (forward-line 2)
-      (insert (format "#+NAME: filter-date
-#+BEGIN_SRC emacs-lisp :var tbl=expenses val=\"%s\"
-  (cl-loop for row in tbl
-        if (equal (nth 0 row) val)
-        collect (nth 1 row) into amounts
-        finally return (-sum amounts))
-#+END_SRC" date))
-      (goto-char (point-max))
-      (write-file buff-name)
-      (org-babel-execute-src-block)
-      (org-babel-goto-named-result "filter-date")
-      (forward-line)
-      (let* ((amount-of-the-day (string-to-number (string-trim (nth 1 (split-string (thing-at-point 'line) ":")))))
-	     (month (format-time-string "%B" (org-time-string-to-seconds date)))
-	     (day (format-time-string "%d" (org-time-string-to-seconds date)))
-	     (year (format-time-string "%Y" (org-time-string-to-seconds date))))
-	(write-file buff-name)
-	(kill-buffer buff)
-	(delete-file buff-name)
-	(message (format "%s %s = %s %s"
-			 (propertize "Expenses on" 'face 'expenses-face-message)
-			 (propertize (format "%s %s %s" month day year) 'face 'expenses-face-date)
-			 expenses-currency
-			 (propertize (format "%s" amount-of-the-day) 'face 'expenses-face-expense)))))))
 
 (provide 'expenses)
 ;;; expenses.el ends here
