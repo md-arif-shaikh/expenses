@@ -22,6 +22,8 @@ To calculate the expenses, it uses the table formula method that exists for ~org
 |---------------------------------+-------------------------------|
 | ~expenses-view-expense~           | View expense file             |
 |---------------------------------+-------------------------------|
+| ~expenses-calc-expense-for-day~   | Calculate expenses in a day   |
+|---------------------------------+-------------------------------|
 | ~expenses-calc-expense-for-month~ | Calculate expenses in a month |
 |---------------------------------+-------------------------------|
 | ~expenses-calc-expense-for-year~  | Calculate expenses in a year  |

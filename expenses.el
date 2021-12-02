@@ -245,5 +245,39 @@ month in format YYYY-MM-DD"
      (list picked-year)))
   (expenses-calc-expense-for-months year))
 
+(defun expenses-calc-expense-for-day (date &optional table-name)
+  "Get the expenses for a given DATE."
+  (interactive
+   (let ((date (org-read-date nil nil nil "Date: ")))
+     (list date)))
+  (let* ((buff-name (format "%s%s.org" (temporary-file-directory) date))
+	 (buff (generate-new-buffer buff-name)))
+    (with-current-buffer buff
+      (insert-buffer-substring (find-file-noselect (expenses--get-file-name date)))
+      (goto-char (point-max))
+      (forward-line 2)
+      (insert (format "#+NAME: filter-date
+#+BEGIN_SRC emacs-lisp :var tbl=expenses val=\"%s\"
+  (cl-loop for row in tbl
+        if (equal (nth 0 row) val)
+        collect (nth 1 row) into amounts
+        finally return (-sum amounts))
+#+END_SRC" date))
+      (goto-char (point-max))
+      (write-file buff-name)
+      (org-babel-execute-src-block)
+      (org-babel-goto-named-result "filter-date")
+      (forward-line)
+					;(switch-to-buffer-other-frame buff)
+      (let* ((amount-of-the-day (string-to-number (string-trim (nth 1 (split-string (thing-at-point 'line) ":")))))
+	     (month (format-time-string "%B" (org-time-string-to-seconds date)))
+	     (day (format-time-string "%d" (org-time-string-to-seconds date)))
+	     (year (format-time-string "%Y" (org-time-string-to-seconds date))))
+	(message (format "%s %s = %s %s"
+			 (propertize "Expenses on" 'face 'expenses-face-message)
+			 (propertize (format "%s %s %s" month day year) 'face 'expenses-face-date)
+			 expenses-currency
+			 (propertize (format "%s" amount-of-the-day) 'face 'expenses-face-expense)))))))
+
 (provide 'expenses)
 ;;; expenses.el ends here
