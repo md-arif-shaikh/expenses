@@ -26,7 +26,7 @@ It uses the ~org-table~ formulas to calculate expenses for the given period.
   #+END_SRC
 - Currency
   #+BEGIN_SRC emacs-lisp
-    setq expenses-currency "$"
+    (setq expenses-currency "$")
   #+END_SRC
 
 * How to use it
