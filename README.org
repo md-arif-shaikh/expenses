@@ -4,6 +4,7 @@
 
 * Table of Contents :TOC:
 - [[#about-expenses][About Expenses]]
+- [[#custom-settings][Custom settings]]
 - [[#how-to-use-it][How to use it]]
 - [[#screenshots][Screenshots]]
 
@@ -13,6 +14,20 @@ It saves the expenses in an ~org-table~ inside an ~org~ file. For each month, a 
 created with the year and month as a prefix to the file names.
 
 It uses the ~org-table~ formulas to calculate expenses for the given period.
+
+* Custom settings
+- Directory for saving the expense ~org~ files
+  #+BEGIN_SRC emacs-lisp
+    (setq expenses-directory "/path/to/directory")
+  #+END_SRC
+- Category list for expenses
+  #+BEGIN_SRC emacs-lisp
+    (setq expenses-category-list '("category-1" "category-2"))
+  #+END_SRC
+- Currency
+  #+BEGIN_SRC emacs-lisp
+    setq expenses-currency "$"
+  #+END_SRC
 
 * How to use it
 |----------------------------------+-----------------------------------------|
@@ -31,3 +46,8 @@ It uses the ~org-table~ formulas to calculate expenses for the given period.
 | ~expenses-calc-expense-for-year~   | Calculate expenses in a year            |
 |----------------------------------+-----------------------------------------|
 * Screenshots
+#+html: <div> <img src="./screenshots/date.png"></div>
+#+html: <div> <img src="./screenshots/date-not-found.png"></div>
+#+html: <div> <img src="./screenshots/month.png"></div>
+#+html: <div> <img src="./screenshots/month-not-found.png"></div>
+#+html: <div> <img src="./screenshots/year.png"></div>
