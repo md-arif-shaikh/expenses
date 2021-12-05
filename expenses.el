@@ -269,7 +269,7 @@
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
-	 (buff-name (format "*expenses %s %s*" date (string-join categories "-")))
+	 (buff-name (format "*expenses-%s-%s*" date (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
 			    collect (expenses--get-expense-for-day-filtered-by-categories date category)))
 	 (message-strings (cl-loop for category in categories
@@ -310,7 +310,7 @@
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
-	 (buff-name (format "*expenses %s %s*" date (string-join categories "-")))
+	 (buff-name (format "*expenses-%s-%s-%s*" month year (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
 			    collect (expenses--get-expense-for-month-filtered-by-categories date category)))
 	 (message-strings (cl-loop for category in categories

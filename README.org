@@ -10,8 +10,8 @@
 
 * About Expenses
 ~Expenses~ is an ~Emacs~ package to keep records of your expenses and view expenses by given date/month/months/year.
-It saves the expenses in an ~org-table~ inside an ~org~ file. For each month, a separate ~org~ file is
-created with the year and month as a prefix to the file names.
+Expenses could be filtered by one or more categories. It saves the expenses in an ~org-table~ inside an ~org~ file.
+For each month, a separate ~org~ file is created with the year and month as a prefix to the file names.
 
 It uses the ~org-table~ formulas to calculate expenses for the given period.
 
@@ -30,24 +30,27 @@ It uses the ~org-table~ formulas to calculate expenses for the given period.
   #+END_SRC
 
 * How to use it
-|----------------------------------+-----------------------------------------|
-| Interactive functions            | Actions                                 |
-|----------------------------------+-----------------------------------------|
-| ~expenses-add-expense~             | Add an expense entry                    |
-|----------------------------------+-----------------------------------------|
-| ~expenses-view-expense~            | View expense file                       |
-|----------------------------------+-----------------------------------------|
-| ~expenses-calc-expense-for-day~    | Calculate expenses in a day             |
-|----------------------------------+-----------------------------------------|
-| ~expenses-calc-expense-for-month~  | Calculate expenses in a month           |
-|----------------------------------+-----------------------------------------|
-| ~expenses-calc-expense-for-months~ | Calculate expenses in a range of months |
-|----------------------------------+-----------------------------------------|
-| ~expenses-calc-expense-for-year~   | Calculate expenses in a year            |
-|----------------------------------+-----------------------------------------|
+|-----------------------------------+----------------------------------------------------------------------|
+| Interactive functions             | Actions                                                              |
+|-----------------------------------+----------------------------------------------------------------------|
+| ~expenses-add-expense~              | Add an expense entry                                                 |
+|-----------------------------------+----------------------------------------------------------------------|
+| ~expenses-view-expense~             | View expense file                                                    |
+|-----------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-day~     | Calculate expenses in a day                                          |
+|-----------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-month~   | Calculate expenses in a month                                        |
+|-----------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-months~  | Calculate expenses in a range of months                              |
+|-----------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-year~    | Calculate expenses in a year                                         |
+|-----------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-by-category~ | Calculate expenses in one or more category for a given date or month |
+|-----------------------------------+----------------------------------------------------------------------|
 * Screenshots
 #+html: <div> <img src="./screenshots/date.png"></div>
 #+html: <div> <img src="./screenshots/date-not-found.png"></div>
 #+html: <div> <img src="./screenshots/month.png"></div>
 #+html: <div> <img src="./screenshots/month-not-found.png"></div>
 #+html: <div> <img src="./screenshots/year.png"></div>
+#+html: <div> <img src="./screenshots/filter-by-category.png"></div>
