@@ -128,6 +128,8 @@
 	 (category (completing-read "Category: " expenses-category-list))
 	 (details (read-string "Details: "))
 	 (file-name (expenses--get-file-name date)))
+    (when (string-blank-p category)
+      (setq category "Others"))
     (when (not (file-exists-p file-name))
       (expenses--create-initial-file date))
     (with-temp-buffer
