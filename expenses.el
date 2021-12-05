@@ -274,10 +274,10 @@
 			    collect (expenses--get-expense-for-day-filtered-by-categories date category)))
 	 (message-strings (cl-loop for category in categories
 				   for expense in expenses
-				   collect (format "%s = %s %s"
+				   collect (format "%s = %s %7s"
 						   (propertize category 'face 'expenses-face-message)
 						   (or expenses-currency "")
-						   (propertize expense 'face 'expenses-face-expense)))))
+						   (propertize (format "%.2f" (string-to-number expense)) 'face 'expenses-face-expense)))))
     (if expenses
 	(with-current-buffer (generate-new-buffer buff-name)
 	(insert (concat
@@ -289,10 +289,10 @@
 		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
 		 (string-join message-strings "\n")
 		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
-		 (format "%s = %s %s"
+		 (format "%s = %s %7s"
 			 (propertize "Total expenses" 'face 'expenses-face-message)
 			 expenses-currency
-			 (propertize (expenses--get-expense-for-day-filtered-by-categories date categories) 'face 'expenses-face-expense))
+			 (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-day-filtered-by-categories date categories))) 'face 'expenses-face-expense))
 		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)))
 	(align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
 	(switch-to-buffer-other-window buff-name))
@@ -315,10 +315,10 @@
 			    collect (expenses--get-expense-for-month-filtered-by-categories date category)))
 	 (message-strings (cl-loop for category in categories
 				   for expense in expenses
-				   collect (format "%s = %s %s"
+				   collect (format "%s = %s %7s"
 						   (propertize category 'face 'expenses-face-message)
 						   (or expenses-currency "")
-						   (propertize expense 'face 'expenses-face-expense)))))
+						   (propertize (format "%.2f" (string-to-number expense)) 'face 'expenses-face-expense)))))
     (if expenses
 	(with-current-buffer (generate-new-buffer buff-name)
 	(insert (concat
@@ -329,10 +329,10 @@
 		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
 		 (string-join message-strings "\n")
 		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
-		 (format "%s = %s %s"
+		 (format "%s = %s %7s"
 			 (propertize "Total expenses" 'face 'expenses-face-message)
 			 expenses-currency
-			 (propertize (expenses--get-expense-for-month-filtered-by-categories date categories) 'face 'expenses-face-expense))
+			 (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-month-filtered-by-categories date categories))) 'face 'expenses-face-expense))
 		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)))
 	(align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
 	(switch-to-buffer-other-window buff-name))
@@ -377,7 +377,7 @@
 			 (propertize day 'face 'expenses-face-date)
 			 (propertize year 'face 'expenses-face-date)
 			 (or expenses-currency "")
-			 (propertize expenses 'face 'expenses-face-expense)))
+			 (propertize (format "%.2f" (string-to-number expenses)) 'face 'expenses-face-expense)))
       (message (format "%s %s %s %s"
 		       (propertize "No expense file is found for" 'face 'expenses-face-message)
 		       (propertize month 'face 'expenses-face-date)
@@ -405,7 +405,7 @@
 			 (propertize month 'face 'expenses-face-date)
 			 (propertize year 'face 'expenses-face-date)
 			 (or expenses-currency "")
-			 (propertize expenses 'face 'expenses-face-expense)))
+			 (propertize (format "%.2f" (string-to-number expenses)) 'face 'expenses-face-expense)))
       (message (format "%s %s %s"
 		       (propertize "No expense file is found for" 'face 'expenses-face-message)
 		       (propertize month 'face 'expenses-face-date)
@@ -440,11 +440,11 @@
 	 (message-strings (cl-loop for n from 0 to (1- num-res)
 				  collect (let ((month (nth n months))
 						(expense (nth n expenses)))
-					    (format "%s = %s %s"
+					    (format "%s = %s %7s"
 						    (propertize month 'face 'expenses-face-date)
 						    expenses-currency
 						    (if (stringp expense)
-							(propertize expense 'face 'expenses-face-expense)
+							(propertize (format "%.2f" (string-to-number expense)) 'face 'expenses-face-expense)
 						      expense)))))
 	 (buffer-name (concat "*Expenses: " year "*")))
     (generate-new-buffer buffer-name)
@@ -454,10 +454,10 @@
       (insert (propertize "---------------------------------\n" 'face 'expenses-face-message))
       (insert (string-join message-strings "\n"))
       (insert (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
-      (insert (format "%s = %s %s"
+      (insert (format "%s = %s %7s"
 		      (propertize "Total" 'face 'expenses-face-date)
 		      expenses-currency
-		      (propertize (number-to-string total) 'face 'expenses-face-expense)))
+		      (propertize (format "%.2f" total) 'face 'expenses-face-expense)))
       (insert (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
       (align-regexp (point-min) (point-max) "\\(\\s-*\\)="))
     (switch-to-buffer-other-window buffer-name)))
