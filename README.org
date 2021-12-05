@@ -7,6 +7,10 @@
 - [[#custom-settings][Custom settings]]
 - [[#how-to-use-it][How to use it]]
 - [[#screenshots][Screenshots]]
+  - [[#expenses-calc-expense-for-day][expenses-calc-expense-for-day]]
+  - [[#expenses-calc-expense-for-month][expenses-calc-expense-for-month]]
+  - [[#expenses-calc-expense-for-monthsexpenses-calc-expense-for-year][expenses-calc-expense-for-months/expenses-calc-expense-for-year]]
+  - [[#expenses-calc-expense-by-category][expenses-calc-expense-by-category]]
 
 * About Expenses
 ~Expenses~ is an ~Emacs~ package to keep records of your expenses and view expenses by given date/month/months/year.
@@ -48,9 +52,13 @@ It uses the ~org-table~ formulas to calculate expenses for the given period.
 | ~expenses-calc-expense-by-category~ | Calculate expenses in one or more category for a given date or month |
 |-----------------------------------+----------------------------------------------------------------------|
 * Screenshots
+** expenses-calc-expense-for-day
 #+html: <div> <img src="./screenshots/date.png"></div>
 #+html: <div> <img src="./screenshots/date-not-found.png"></div>
+** expenses-calc-expense-for-month
 #+html: <div> <img src="./screenshots/month.png"></div>
 #+html: <div> <img src="./screenshots/month-not-found.png"></div>
-#+html: <div> <img src="./screenshots/year.png"></div>
-#+html: <div> <img src="./screenshots/filter-by-category.png"></div>
+** expenses-calc-expense-for-months/expenses-calc-expense-for-year
+#+html: <div> <img src="./screenshots/months-year.png"></div>
+** expenses-calc-expense-by-category
+#+html: <div> <img src="./screenshots/filter.png"></div>
