@@ -59,6 +59,11 @@
   :type 'list
   :group 'expenses)
 
+(defcustom expenses-add-hline-in-org nil
+  "Option to add or not add hline in the org files"
+  :type 'boolean
+  :group 'expenses)
+
 (defvar expenses-color--expense "#98C379"
   "Color to indicate a expense.")
 (defvar expenses-color--date "#BE5046"
@@ -127,7 +132,7 @@
       (expenses--create-initial-file date))
     (with-temp-buffer
       (insert (format "|%s |%s |%s |%s |\n" date amount category details))
-      (insert "|--|--|--|--|\n")
+      (when expenses-add-hline-in-org (insert "|--|--|--|--|\n"))
       (append-to-file (point-min) (point-max) file-name))
     (when (string-equal (completing-read "Add another expense: " '("no" "yes")) "yes")
       (expenses-add-expense))
