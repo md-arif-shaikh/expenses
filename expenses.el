@@ -3,7 +3,7 @@
 ;; Copyright (C) 2021  Md Arif Shaikh
 
 ;; Author: Md Arif Shaikh <arifshaikh.astro@gmail.com>
-;; Keywords: expense tracking
+;; Keywords: expense tracking, convenience
 ;; Version: 0.0.1
 ;; Homepage: https://github.com/md-arif-shaikh/expenses
 ;; URL: https://github.com/md-arif-shaikh/expenses
@@ -60,7 +60,7 @@
   :group 'expenses)
 
 (defcustom expenses-add-hline-in-org nil
-  "Option to add or not add hline in the org files"
+  "Option to add or not add hline in the org files."
   :type 'boolean
   :group 'expenses)
 
@@ -138,8 +138,7 @@
       (append-to-file (point-min) (point-max) file-name))
     (when (string-equal (completing-read "Add another expense: " '("no" "yes")) "yes")
       (expenses-add-expense))
-    (with-temp-buffer
-      (set-buffer (find-file-noselect file-name))
+    (with-current-buffer (find-file-noselect file-name)
       (goto-char (point-max))
       (forward-line -1)
       (org-table-align)
@@ -193,19 +192,19 @@
 (defun expenses--get-expense-filtered-by-dates-and-categories (dates amounts categories dates-to-filter-with categories-to-filter-with)
   "Given DATES list, AMOUNTS list and CATEGORIES list, filter the AMOUNT list using DATES-TO-FILTER-WITH and the CATEGORIES-TO-FILTER-WITH and return the sum of the filterd list."
   (let ((dates-filter (if (not (listp dates-to-filter-with)) (list dates-to-filter-with) dates-to-filter-with))
-	(categories-filter (mapcar 'upcase (if (not (listp categories-to-filter-with)) (list categories-to-filter-with) categories-to-filter-with))))
+	(categories-filter (mapcar #'upcase (if (not (listp categories-to-filter-with)) (list categories-to-filter-with) categories-to-filter-with))))
     (cl-loop for date in dates
 	     for amount in amounts
-	     for category in (mapcar 'upcase categories)
+	     for category in (mapcar #'upcase categories)
 	     if (and (member date dates-filter) (member category categories-filter))
 	     collect amount into filtered-amounts
 	     finally return (-sum filtered-amounts))))
 
 (defun expenses--get-expense-filtered-by-categories (amounts categories categories-to-filter-with)
   "Given AMOUNTS list and CATEGORIES list, filter the AMOUNT list using CATEGORIES-TO-FILTER-WITH and return the sum of the filterd list."
-  (let ((categories-filter (mapcar 'upcase (if (not (listp categories-to-filter-with)) (list categories-to-filter-with) categories-to-filter-with))))
+  (let ((categories-filter (mapcar #'upcase (if (not (listp categories-to-filter-with)) (list categories-to-filter-with) categories-to-filter-with))))
     (cl-loop for amount in amounts
-	     for category in (mapcar 'upcase categories)
+	     for category in (mapcar #'upcase categories)
 	     if (member category categories-filter)
 	     collect amount into filtered-amounts
 	     finally return (-sum filtered-amounts))))
@@ -258,8 +257,8 @@
 
 (defun expenses--ask-for-categories ()
   "Ask for categories from user."
-  (if (eq expenses-category-list nil)
-      (error "expenses-category-list is empty!")
+  (if (null expenses-category-list)
+      (error "The custom variable `expenses-category-list` is empty!")
     (let* ((chosen-category (completing-read "category: " (-flatten (list "All" expenses-category-list))))
 	   (category-list (list chosen-category)))
       (if (string-equal chosen-category "All")
@@ -287,22 +286,21 @@
 						   (propertize (format "%.2f" (string-to-number expense)) 'face 'expenses-face-expense)))))
     (if expenses
 	(with-current-buffer (generate-new-buffer buff-name)
-	(insert (concat
-		 (propertize "---------------------------------\n" 'face 'expenses-face-message)
-		 (format "%s %s %s"
-			 (propertize month 'face 'expenses-face-date)
-			 (propertize day 'face 'expenses-face-date)
-			 (propertize year 'face 'expenses-face-date))
-		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
-		 (string-join message-strings "\n")
-		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
-		 (format "%s = %s %11s"
-			 (propertize "Total expenses" 'face 'expenses-face-message)
-			 expenses-currency
-			 (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-day-filtered-by-categories date categories))) 'face 'expenses-face-expense))
-		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)))
-	(align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
-	(switch-to-buffer-other-window buff-name))
+	  (insert (propertize "---------------------------------\n" 'face 'expenses-face-message)
+		  (format "%s %s %s"
+			  (propertize month 'face 'expenses-face-date)
+			  (propertize day 'face 'expenses-face-date)
+			  (propertize year 'face 'expenses-face-date))
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
+		  (string-join message-strings "\n")
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
+		  (format "%s = %s %11s"
+			  (propertize "Total expenses" 'face 'expenses-face-message)
+			  expenses-currency
+			  (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-day-filtered-by-categories date categories))) 'face 'expenses-face-expense))
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
+	  (align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
+	  (switch-to-buffer-other-window buff-name))
       (message (format "%s %s %s %s"
 		       (propertize "No expense file is found for" 'face 'expenses-face-message)
 		       (propertize month 'face 'expenses-face-date)
@@ -316,7 +314,6 @@
 	 (categories (expenses--ask-for-categories))
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
-	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
 	 (buff-name (format "*expenses-%s-%s-%s*" month year (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
 			    collect (expenses--get-expense-for-month-filtered-by-categories date category)))
@@ -328,19 +325,18 @@
 						   (propertize (format "%.2f" (string-to-number expense)) 'face 'expenses-face-expense)))))
     (if expenses
 	(with-current-buffer (generate-new-buffer buff-name)
-	(insert (concat
-		 (propertize "---------------------------------\n" 'face 'expenses-face-message)
-		 (format "%s %s"
-			 (propertize month 'face 'expenses-face-date)
-			 (propertize year 'face 'expenses-face-date))
-		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
-		 (string-join message-strings "\n")
-		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
-		 (format "%s = %s %11s"
-			 (propertize "Total expenses" 'face 'expenses-face-message)
-			 expenses-currency
-			 (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-month-filtered-by-categories date categories))) 'face 'expenses-face-expense))
-		 (propertize "\n---------------------------------\n" 'face 'expenses-face-message)))
+	  (insert (propertize "---------------------------------\n" 'face 'expenses-face-message)
+		  (format "%s %s"
+			  (propertize month 'face 'expenses-face-date)
+			  (propertize year 'face 'expenses-face-date))
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
+		  (string-join message-strings "\n")
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
+		  (format "%s = %s %11s"
+			  (propertize "Total expenses" 'face 'expenses-face-message)
+			  expenses-currency
+			  (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-month-filtered-by-categories date categories))) 'face 'expenses-face-expense))
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
 	(align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
 	(switch-to-buffer-other-window buff-name))
       (message (format "%s %s %s"
@@ -376,7 +372,7 @@
   (let* ((month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
-	 (expenses (expenses--get-expense-for-day date)))
+	 (expenses (expenses--get-expense-for-day date table-name)))
     (if expenses
 	(message (format "%s %s %s %s = %s %s"
 			 (propertize "Total expenses for" 'face 'expenses-face-message)
@@ -425,8 +421,8 @@
 						     (month (format-time-string "%B" (org-time-string-to-seconds date))))
 						(cons month (expenses--get-expense-for-month date)))))
 	 (months (mapcar 'car expenses-list))
-	 (expenses (mapcar 'cdr expenses-list))
-	 (total-expense (-sum (-map-when 'stringp 'string-to-number (-replace nil 0 expenses)))))
+	 (expenses (mapcar #'cdr expenses-list))
+	 (total-expense (-sum (-map-when 'stringp #'string-to-number (-replace nil 0 expenses)))))
     `(("months" . ,months)
       ("expenses" . ,expenses)
       ("total" . ,total-expense))))
