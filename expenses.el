@@ -301,11 +301,11 @@
 		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
 	  (align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
 	  (switch-to-buffer-other-window buff-name))
-      (message (format "%s %s %s %s"
-		       (propertize "No expense file is found for" 'face 'expenses-face-message)
-		       (propertize month 'face 'expenses-face-date)
-		       (propertize day 'face 'expenses-face-date)
-		       (propertize year 'face 'expenses-face-date))))))
+      (message "%s %s %s %s"
+	       (propertize "No expense file is found for" 'face 'expenses-face-message)
+	       (propertize month 'face 'expenses-face-date)
+	       (propertize day 'face 'expenses-face-date)
+	       (propertize year 'face 'expenses-face-date)))))
 
 (defun expenses-calc-expense-for-month-filtered-by-categories ()
   "Calculate expense for month filtered by categories and show result in a buffer."
@@ -339,10 +339,10 @@
 		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
 	(align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
 	(switch-to-buffer-other-window buff-name))
-      (message (format "%s %s %s"
-		       (propertize "No expense file is found for" 'face 'expenses-face-message)
-		       (propertize month 'face 'expenses-face-date)
-		       (propertize year 'face 'expenses-face-date))))))
+      (message "%s %s %s"
+	       (propertize "No expense file is found for" 'face 'expenses-face-message)
+	       (propertize month 'face 'expenses-face-date)
+	       (propertize year 'face 'expenses-face-date)))))
 
 (defun expenses--get-expense-for-day (date &optional table-name)
   "Calculate expenses for a DATE and TABLE-NAME."
@@ -374,18 +374,18 @@
 	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
 	 (expenses (expenses--get-expense-for-day date table-name)))
     (if expenses
-	(message (format "%s %s %s %s = %s %s"
-			 (propertize "Total expenses for" 'face 'expenses-face-message)
-			 (propertize month 'face 'expenses-face-date)
-			 (propertize day 'face 'expenses-face-date)
-			 (propertize year 'face 'expenses-face-date)
-			 (or expenses-currency "")
-			 (propertize (format "%.2f" (string-to-number expenses)) 'face 'expenses-face-expense)))
-      (message (format "%s %s %s %s"
-		       (propertize "No expense file is found for" 'face 'expenses-face-message)
-		       (propertize month 'face 'expenses-face-date)
-		       (propertize day 'face 'expenses-face-date)
-		       (propertize year 'face 'expenses-face-date))))))
+	(message "%s %s %s %s = %s %s"
+		 (propertize "Total expenses for" 'face 'expenses-face-message)
+		 (propertize month 'face 'expenses-face-date)
+		 (propertize day 'face 'expenses-face-date)
+		 (propertize year 'face 'expenses-face-date)
+		 (or expenses-currency "")
+		 (propertize (format "%.2f" (string-to-number expenses)) 'face 'expenses-face-expense))
+      (message "%s %s %s %s"
+	       (propertize "No expense file is found for" 'face 'expenses-face-message)
+	       (propertize month 'face 'expenses-face-date)
+	       (propertize day 'face 'expenses-face-date)
+	       (propertize year 'face 'expenses-face-date)))))
 
 (defun expenses--get-expense-for-month (date)
   "Calculate expense for a month specified by any DATE in that month in format YYYY-MM-DD."
@@ -403,16 +403,16 @@
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (expenses (expenses--get-expense-for-month date)))
     (if expenses
-	(message (format "%s %s %s = %s %s"
-			 (propertize "Total expenses for" 'face 'expenses-face-message)
-			 (propertize month 'face 'expenses-face-date)
-			 (propertize year 'face 'expenses-face-date)
-			 (or expenses-currency "")
-			 (propertize (format "%.2f" (string-to-number expenses)) 'face 'expenses-face-expense)))
-      (message (format "%s %s %s"
-		       (propertize "No expense file is found for" 'face 'expenses-face-message)
-		       (propertize month 'face 'expenses-face-date)
-		       (propertize year 'face 'expenses-face-date))))))
+	(message "%s %s %s = %s %s"
+		 (propertize "Total expenses for" 'face 'expenses-face-message)
+		 (propertize month 'face 'expenses-face-date)
+		 (propertize year 'face 'expenses-face-date)
+		 (or expenses-currency "")
+		 (propertize (format "%.2f" (string-to-number expenses)) 'face 'expenses-face-expense))
+      (message "%s %s %s"
+	       (propertize "No expense file is found for" 'face 'expenses-face-message)
+	       (propertize month 'face 'expenses-face-date)
+	       (propertize year 'face 'expenses-face-date)))))
 
 (defun expenses--get-expense-for-year (year &optional start end)
   "Calculate expenses for a YEAR with optional arguments START month and END month START and END should be 1-12."
@@ -420,7 +420,7 @@
 				      collect (let* ((date (format "%s-%02d-01" year n))
 						     (month (format-time-string "%B" (org-time-string-to-seconds date))))
 						(cons month (expenses--get-expense-for-month date)))))
-	 (months (mapcar 'car expenses-list))
+	 (months (mapcar #'car expenses-list))
 	 (expenses (mapcar #'cdr expenses-list))
 	 (total-expense (-sum (-map-when 'stringp #'string-to-number (-replace nil 0 expenses)))))
     `(("months" . ,months)
