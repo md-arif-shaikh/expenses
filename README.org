@@ -2,10 +2,12 @@
 #+AUTHOR: Md Arif Shaikh
 #+EMAIL: arifshaikh.astro@gmail.com
 
+#+html: <div> <img alt="GitHub" src="https://img.shields.io/github/license/md-arif-shaikh/expenses"> <a href="https://melpa.org/#/expenses"><img alt="MELPA" src="https://melpa.org/packages/expenses-badge.svg"/></a> </div>
 * Table of Contents :TOC:
 - [[#about-expenses][About Expenses]]
+- [[#how-to-install][How to install]]
 - [[#custom-settings][Custom settings]]
-- [[#how-to-use-it][How to use it]]
+- [[#interactive-functions][Interactive functions]]
 - [[#screenshots][Screenshots]]
   - [[#expenses-calc-expense-for-day][expenses-calc-expense-for-day]]
   - [[#expenses-calc-expense-for-month][expenses-calc-expense-for-month]]
@@ -18,6 +20,9 @@ Expenses could be filtered by one or more categories. It saves the expenses in a
 For each month, a separate ~org~ file is created with the year and month as a prefix to the file names.
 
 It uses the ~org-table~ formulas to calculate expenses for the given period.
+
+* How to install
+~Expenses~ is available in [[https://melpa.org/][MELPA]].
 
 * Custom settings
 - Directory for saving the expense ~org~ files
@@ -33,7 +38,7 @@ It uses the ~org-table~ formulas to calculate expenses for the given period.
     (setq expenses-currency "$")
   #+END_SRC
 
-* How to use it
+* Interactive functions
 |-----------------------------------+----------------------------------------------------------------------|
 | Interactive functions             | Actions                                                              |
 |-----------------------------------+----------------------------------------------------------------------|
