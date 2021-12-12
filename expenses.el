@@ -105,12 +105,54 @@
   (let ((year-month (substring date 0 7)))
     (concat expenses-directory year-month "-" "expenses.org")))
 
+(defun expenses--goto-table-end (name)
+  "Go to end of table named NAME if point is not in any table."
+  (unless (org-at-table-p)
+    (let ((org-babel-results-keyword "NAME"))
+      (org-babel-goto-named-result name)
+      (forward-line 2)
+      (goto-char (org-table-end)))))
+
+(defun expenses--goto-table-begin (name)
+  "Go to begining of table named NAME if point is not in any table."
+  (unless (org-at-table-p)
+    (let ((org-babel-results-keyword "NAME"))
+      (org-babel-goto-named-result name)
+      (forward-line 2)
+      (goto-char (org-table-begin)))))
+
+(defun expenses--get-details-list (date &optional table-name)
+  "Get the details list for a given month using DATE and an optional TABLE-NAME."
+  (let ((file-name (expenses--get-file-name date))
+	(buff-name (concat (temporary-file-directory) "test.org"))
+	(details-string-list '()))
+    (with-current-buffer (generate-new-buffer buff-name)
+      (insert-buffer-substring (find-file-noselect file-name))
+      (write-file buff-name)
+      (expenses--goto-table-begin (or table-name "expenses"))
+      (forward-line 2)
+      (while (org-at-table-p)
+	(push (string-trim (org-table-get-field 4)) details-string-list)
+	(forward-line))
+      (kill-buffer "test.org")
+      (delete-file buff-name)
+      details-string-list)))
+
+(defun expenses--get-frequently-used-details-list (date)
+  "For given DATE, get details from the already existing data.
+Looks for the last two existing files and collect the details."
+  (let* ((month (format-time-string "%m" (org-time-string-to-seconds date)))
+	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
+	 (last-month-date (org-read-date nil nil "-1m" nil (encode-time (list 0 0 0 1 (string-to-number month) (string-to-number year) nil nil nil))))
+	 (details-strings-list (delete-dups (-flatten (cl-loop for d in (list date last-month-date)
+							       collect (expenses--get-details-list d))))))
+    details-strings-list))
+
 (defun expenses--create-initial-file (date)
   "Create a file for a DATE with initial structure."
   (let ((file-name (expenses--get-file-name date))
 	(month (format-time-string "%B" (org-time-string-to-seconds date)))
 	(year (format-time-string "%Y" (org-time-string-to-seconds date))))
-    (message month)
     (with-temp-buffer
       (insert (format "#+TITLE: Expenses for %s %s\n\n" month year))
       (insert "* Expenses\n")
@@ -126,7 +168,7 @@
   (let* ((date (org-read-date nil nil nil "Date: "))
 	 (amount (read-string "Amount: "))
 	 (category (completing-read "Category: " expenses-category-list))
-	 (details (read-string "Details: "))
+	 (details (completing-read "Details: " (expenses--get-frequently-used-details-list date)))
 	 (file-name (expenses--get-file-name date)))
     (when (string-blank-p category)
       (setq category "Others"))
@@ -154,14 +196,6 @@
       (let ((month (format-time-string "%B" (org-time-string-to-seconds date)))
 	    (year (format-time-string "%Y" (org-time-string-to-seconds date))))
 	(message "No expense file is found for %s %s" month year)))))
-
-(defun expenses--goto-table-end (name)
-  "Go to end of table named NAME if point is not in any table."
-  (unless (org-at-table-p)
-    (let ((org-babel-results-keyword "NAME"))
-      (org-babel-goto-named-result name)
-      (forward-line 2)
-      (goto-char (org-table-end)))))
 
 (defun expenses--get-expense-for-file (file-name &optional table-name)
   "Calculate expenses for given FILE-NAME and TABLE-NAME."
