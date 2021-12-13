@@ -148,10 +148,10 @@
 					collect (cons item (-sum (cl-loop for it in lst
 									  if (string-equal item it)
 									  collect 1)))))
-    (setq sorted-alist (-sort #'(lambda (n1 n2)
-				  (let ((fr1 (cdr n1))
-					(fr2 (cdr n2)))
-				    (> fr1 fr2))) item-frequency-alist))
+    (setq sorted-alist (-sort (lambda (n1 n2)
+				(let ((fr1 (cdr n1))
+				      (fr2 (cdr n2)))
+				  (> fr1 fr2))) item-frequency-alist))
     (mapcar #'car sorted-alist)))
 
 (defun expenses--get-frequently-used-details-list (date)
