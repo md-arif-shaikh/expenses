@@ -138,15 +138,30 @@
       (delete-file buff-name)
       details-string-list)))
 
+(defun expenses--sort-by-frequency (lst)
+  "Sort a list LST by frequency."
+  (let* ((unique-list (cl-remove-duplicates lst :test #'string-equal))
+	 (item-frequency-alist)
+	 (sorted-alist))
+    (setq item-frequency-alist (cl-loop for item in unique-list
+					collect (cons item (-sum (cl-loop for it in lst
+									  if (string-equal item it)
+									  collect 1)))))
+    (setq sorted-alist (-sort #'(lambda (n1 n2)
+				  (let ((fr1 (cdr n1))
+					(fr2 (cdr n2)))
+				    (> fr1 fr2))) item-frequency-alist))
+    (mapcar #'car sorted-alist)))
+
 (defun expenses--get-frequently-used-details-list (date)
   "For given DATE, get details from the already existing data.
 Looks for the last two existing files and collect the details."
   (let* ((month (format-time-string "%m" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (last-month-date (org-read-date nil nil "-1m" nil (encode-time (list 0 0 0 1 (string-to-number month) (string-to-number year) nil nil nil))))
-	 (details-strings-list (delete-dups (-flatten (cl-loop for d in (list date last-month-date)
-							       collect (expenses--get-details-list d))))))
-    details-strings-list))
+	 (details-strings-list (-remove #'string-blank-p (-flatten (cl-loop for d in (list date last-month-date)
+									    collect (expenses--get-details-list d))))))
+    (expenses--sort-by-frequency details-strings-list)))
 
 (defun expenses--create-initial-file (date)
   "Create a file for a DATE with initial structure."
