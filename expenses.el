@@ -135,6 +135,7 @@
 	(push (string-trim (org-table-get-field 4)) details-string-list)
 	(forward-line))
       (kill-buffer "test.org")
+      (kill-buffer (-last-item (split-string file-name "/")))
       (delete-file buff-name)
       details-string-list)))
 
