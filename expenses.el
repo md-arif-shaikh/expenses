@@ -182,7 +182,7 @@ Looks for the last two existing files and collect the details."
   "Add expense."
   (interactive)
   (let* ((date (org-read-date nil nil nil "Date: "))
-	 (amount (read-string "Amount: "))
+	 (amount (read-number "Amount: "))
 	 (category (completing-read "Category: " expenses-category-list))
 	 (details (completing-read "Details: " (expenses--get-frequently-used-details-list date)))
 	 (file-name (expenses--get-file-name date)))
@@ -191,7 +191,7 @@ Looks for the last two existing files and collect the details."
     (when (not (file-exists-p file-name))
       (expenses--create-initial-file date))
     (with-temp-buffer
-      (insert (format "|%s |%s |%s |%s |\n" date amount category details))
+      (insert (format "|%s |%.2f |%s |%s |\n" date amount category details))
       (when expenses-add-hline-in-org (insert "|--|--|--|--|\n"))
       (append-to-file (point-min) (point-max) file-name))
     (when (string-equal (completing-read "Add another expense: " '("no" "yes")) "yes")
