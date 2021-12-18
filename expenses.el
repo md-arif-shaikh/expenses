@@ -718,7 +718,7 @@ Column number starts with 0, i.e., second column has column no 1."
 						     date
 						     (string-to-number amount)
 						     (cond (add-one-category-for-all-entry-p one-category)
-							   (add-category-p (read-string (format "Add category for %s %s %s: " date amount details)))
+							   (add-category-p (completing-read (format "Add category for %s %s %s: " date amount details) expenses-category-list))
 							   (t category))
 						     (cond (add-one-narrative-for-all-entry-p one-narrative)
 							   (add-narrative-p (read-string (format "Add details for %s %s %s: " date amount category)))
