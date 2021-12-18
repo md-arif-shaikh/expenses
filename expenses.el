@@ -64,6 +64,13 @@
   :type 'boolean
   :group 'expenses)
 
+(defcustom expenses-bank-profiles nil
+  "Set profile for bank to use for importing expenses.
+Alist bank profiles.  Each element has the form
+\(BANKNAME SEP DATE-COL DEBIT-COL DATE-FORMAT NARRATIVE-COL CATEGORY-COL)."
+  :type '(alist :value-type (group string integer integer string integer integer))
+  :group 'expenses)
+
 (defvar expenses-color--expense "#98C379"
   "Color to indicate a expense.")
 (defvar expenses-color--date "#BE5046"
@@ -723,6 +730,22 @@ Column number starts with 0, i.e., second column has column no 1."
 	(forward-line -2)
 	(org-table-align)
 	(write-file file-name)))))
+
+(defun expenses-import-expense-with-bank-profile (file-name bank-name)
+  "Import expenses from a CSV file with FILE-NAME for a bank with BANK-NAME."
+  (interactive
+   (list (read-file-name "Enter file name: ")
+	 (if expenses-bank-profiles
+	     (completing-read "Enter bank name: " (mapcar #'car expenses-bank-profiles))
+	   (error "No bank profiles are found. Set the bank profile using `expenses-bank-profiles`!"))))
+   (let* ((profile (cdr (assoc bank-name expenses-bank-profiles)))
+	  (sep (-first-item profile))
+	  (date-col (-second-item profile))
+	  (debit-col (-third-item profile))
+	  (date-format (-fourth-item profile))
+	  (narrative-col (-fifth-item profile))
+	  (category-col (nth 5 profile)))
+     (expenses-import-expense file-name sep date-col debit-col date-format narrative-col category-col)))
 
 (provide 'expenses)
 ;;; expenses.el ends here

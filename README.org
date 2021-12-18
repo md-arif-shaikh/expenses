@@ -18,16 +18,21 @@
 ~Expenses~ is an ~Emacs~ package to keep records of your expenses and view expenses conveniently.
  - Expenses could be calculated for given date/month/months/year.
  - Expenses could be filtered by one or more categories for a given time period.
- - Expenses could be imported from `CSV` files and entries would be added appropriate files.
+ - Expenses could be imported from ~CSV~ files and entries would be added appropriate files.
  - It saves the expenses in an ~org-table~ inside an ~org~ file.
  - For each month, a separate ~org~ file is created with the year and month as a prefix to the file names.
  - It uses the ~org-table~ formulas to calculate expenses for the given period.
 
 * How to install
-~Expenses~ is available in [[https://melpa.org/][MELPA]]. With `use-package` you can do something like
+~Expenses~ is available in [[https://melpa.org/][MELPA]]. With ~use-package~ you can do something like
 #+BEGIN_SRC emacs-lisp
   (use-package expenses
     :ensure t)
+#+END_SRC
+or if you use ~straight~ then
+#+BEGIN_SRC emacs-lisp
+  (use-package expenses
+    :straight t)
 #+END_SRC
 
 * Custom settings
@@ -43,7 +48,15 @@
   #+BEGIN_SRC emacs-lisp
     (setq expenses-currency "$")
   #+END_SRC
-
+- Bank profiles
+  To be able to import expenses from bank statements conveniently, you can set profiles
+  for your banks using the varibale ~expenses-bank-profiles~. This a list where each element
+  is of the form ~(bank-name sep date-col debit-col date-format narrative-col category-col)~
+  #+BEGIN_SRC emacs-lisp
+    (setq expenses-bank-profiles (("TRUSTED-BANK" "," 1 2 "dd/mm/yyyy" 3 4)
+				  ("ANOTHER-BANK" "\t" 1 4 "yyyy/mm/dd" 2 3)))
+  #+END_SRC
+  
 * Interactive functions
 |-----------------------------------+----------------------------------------------------------------------|
 | Interactive functions             | Actions                                                              |
