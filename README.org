@@ -36,21 +36,20 @@ or if you use ~straight~ then
 #+END_SRC
 
 * Custom settings
-- Directory for saving the expense ~org~ files
+- *Directory for saving the expense ~org~ files*
   #+BEGIN_SRC emacs-lisp
     (setq expenses-directory "/path/to/directory")
   #+END_SRC
-- Category list for expenses
+- *Category list for expenses*
   #+BEGIN_SRC emacs-lisp
     (setq expenses-category-list '("category-1" "category-2"))
   #+END_SRC
-- Currency
+- *Currency*
   #+BEGIN_SRC emacs-lisp
     (setq expenses-currency "$")
   #+END_SRC
-- Bank profiles
-  To be able to import expenses from bank statements conveniently, you can set profiles
-  for your banks using the varibale ~expenses-bank-profiles~. This a list where each element
+- *Bank profiles*: To be able to import expenses from bank statements conveniently, you can set profiles
+  for your banks using the varibale ~expenses-bank-profiles~. This is a list where each element
   is of the form ~(bank-name sep date-col debit-col date-format narrative-col category-col)~
   #+BEGIN_SRC emacs-lisp
     (setq expenses-bank-profiles (("TRUSTED-BANK" "," 1 2 "dd/mm/yyyy" 3 4)
@@ -58,25 +57,27 @@ or if you use ~straight~ then
   #+END_SRC
   
 * Interactive functions
-|-----------------------------------+----------------------------------------------------------------------|
-| Interactive functions             | Actions                                                              |
-|-----------------------------------+----------------------------------------------------------------------|
-| ~expenses-add-expense~              | Add an expense entry                                                 |
-|-----------------------------------+----------------------------------------------------------------------|
-| ~expenses-view-expense~             | View expense file                                                    |
-|-----------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-for-day~     | Calculate expenses in a day                                          |
-|-----------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-for-month~   | Calculate expenses in a month                                        |
-|-----------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-for-months~  | Calculate expenses in a range of months                              |
-|-----------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-for-year~    | Calculate expenses in a year                                         |
-|-----------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-by-category~ | Calculate expenses in one or more category for a given date or month |
-|-----------------------------------+----------------------------------------------------------------------|
-| ~expenses-import-expense~           | Import expense from CSV files                                        |
-|-----------------------------------+----------------------------------------------------------------------|
+|-------------------------------------------+----------------------------------------------------------------------|
+| Interactive functions                     | Actions                                                              |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-add-expense~                      | Add an expense entry                                                 |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-view-expense~                     | View expense file                                                    |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-day~             | Calculate expenses in a day                                          |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-month~           | Calculate expenses in a month                                        |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-months~          | Calculate expenses in a range of months                              |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-year~            | Calculate expenses in a year                                         |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-by-category~         | Calculate expenses in one or more category for a given date or month |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-import-expense~                   | Import expense from CSV files                                        |
+|-------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-import-expense-with-bank-profile~ | Import expense from CSV files using user customized profiles         |
+|-------------------------------------------+----------------------------------------------------------------------|
 * Screenshots
 ** expenses-calc-expense-for-day
 #+html: <div> <img src="./screenshots/date.png"></div>
