@@ -548,7 +548,7 @@ Looks for the last two existing files and collect the details."
 Each string represents a line in the file."
   (with-temp-buffer
    (insert-file-contents-literally file-name)
-   (split-string (buffer-string) "\n")))
+   (-remove #'string-blank-p (split-string (buffer-string) "\n"))))
 
 (defun expenses--convert-date-to-org-format (date format)
   "Convert given DATE to yyyy-mm-dd from given FORMAT."
