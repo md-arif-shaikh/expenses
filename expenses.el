@@ -38,7 +38,7 @@
 ;;; Code:
 (require 'org)
 (require 'dash)
-(require 'expenses-utis)
+(require 'expenses-utils)
 
 (defcustom expenses-directory nil
   "Directory to save and look for the expense files."
