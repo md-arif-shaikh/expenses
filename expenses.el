@@ -7,7 +7,7 @@
 ;; Version: 0.0.1
 ;; Homepage: https://github.com/md-arif-shaikh/expenses
 ;; URL: https://github.com/md-arif-shaikh/expenses
-;; Package-Requires: ((emacs "26.1") (dash "2.19.1"))
+;; Package-Requires: ((emacs "26.1") (dash "2.19.1") (ht "2.3"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
