@@ -31,7 +31,12 @@
 
 (defvar expenses-utils-keyword-category-ht (ht ("CAFE" "Food")
 					       ("HOTEL" "Food")
+					       ("RESTAURANT" . "Food")
 					       ("CHEMIST" "Health")
+					       ("HOSPITAL" "Health")
+					       ("CLINIC" "Health")
+					       ("MEDICAL" "Health")
+					       ("CHECKUP" "Health")
 					       ("ZOO" "Entertainment")
 					       ("MUSEUM" "Entertainment")
 					       ("MOVIE" "Entertainment")
@@ -40,11 +45,16 @@
 
 (defun expenses-utils-auto-assign-category (narrative)
   "Given a NARRATIVE, auto-assign a category using `expenses-utils-keyword-category-ht`."
-  (let ((words (split-string narrative nil t)))
-    (cl-loop for word in words
-	     if (ht-get expenses-utils-keyword-category-ht (upcase word))
-	     collect (ht-get expenses-utils-keyword-category-ht (upcase word)) into key
-	     finally return (car key))))
+  (let* ((words (split-string narrative nil t))
+	(len (length words))
+	(category)
+	(iter 0))
+    (while (< iter len)
+      (if (ht-get expenses-utils-keyword-category-ht (upcase (nth iter words)))
+	  (progn (setq category (ht-get expenses-utils-keyword-category-ht (upcase (nth iter words))))
+		 (setq iter len)))
+      (setq iter (1+ iter)))
+    category))
 
 (provide 'expenses-utils)
 ;;; expenses-utils.el ends here
