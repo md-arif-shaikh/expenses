@@ -31,7 +31,7 @@
 
 (defvar expenses-utils-keyword-category-ht (ht ("CAFE" "Food")
 					       ("HOTEL" "Food")
-					       ("RESTAURANT" . "Food")
+					       ("RESTAURANT" "Food")
 					       ("CHEMIST" "Health")
 					       ("HOSPITAL" "Health")
 					       ("CLINIC" "Health")
