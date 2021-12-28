@@ -29,6 +29,17 @@
 ;;; Code:
 (require 'ht)
 
+(defcustom expenses-utils-auto-assign-categies-on-import nil
+  "Auto-assign category while importing bank statements."
+  :type 'boolean
+  :group 'expenses)
+
+(defcustom expenses-utils-phrases-alist nil
+  "Alist of common phrases to search for to auto-assign category while
+importing bank statements."
+  :type 'alist
+  :group 'expenses)
+
 (defvar expenses-utils-keyword-category-ht (ht ("CAFE" "Food")
 					       ("HOTEL" "Food")
 					       ("RESTAURANT" "Food")
@@ -43,7 +54,7 @@
 					       ("CINEMA" "Entertainment"))
   "Hash-table for keyword category.")
 
-(defun expenses-utils-auto-assign-category (narrative)
+(defun expenses-utils-auto-assign-category-using-keywords (narrative)
   "Given a NARRATIVE, auto-assign a category using `expenses-utils-keyword-category-ht`."
   (let* ((words (split-string narrative nil t))
 	(len (length words))
@@ -54,6 +65,20 @@
 	  (progn (setq category (ht-get expenses-utils-keyword-category-ht (upcase (nth iter words))))
 		 (setq iter len)))
       (setq iter (1+ iter)))
+    category))
+
+(defun expenses-utils-auto-assign-category-using-phrases (narrative)
+  "Given a NARRATIVE, auto-assign a catagory using phrases from `expenses-utils-phrases-alist`"
+  (let* ((phrases (mapcar #'car expenses-utils-phrases-alist))
+	 (len (length phrases))
+	 (category)
+	 (iter 0))
+    (while (< iter len)
+      (if (string-match-p (regexp-quote (nth iter phrases)) (upcase narrative))
+	  (progn
+	    (setq category (cdr (assoc (nth iter phrases) expenses-utils-phrases-alist)))
+	    (setq iter len))
+	(setq iter (1+ iter))))
     category))
 
 (provide 'expenses-utils)
