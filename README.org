@@ -9,6 +9,7 @@
 - [[#custom-settings][Custom settings]]
 - [[#interactive-functions][Interactive functions]]
 - [[#screenshots][Screenshots]]
+  - [[#expenses-add-expense][expenses-add-expense]]
   - [[#expenses-calc-expense-for-day][expenses-calc-expense-for-day]]
   - [[#expenses-calc-expense-for-month][expenses-calc-expense-for-month]]
   - [[#expenses-calc-expense-for-monthsexpenses-calc-expense-for-year][expenses-calc-expense-for-months/expenses-calc-expense-for-year]]
@@ -80,6 +81,8 @@ or if you use ~straight~ then
 | ~expenses-import-expense-with-bank-profile~ | Import expense from CSV files using user customized profiles         |
 |-------------------------------------------+----------------------------------------------------------------------|
 * Screenshots
+** expenses-add-expense
+#+html: <div> <img src="./screenshots/add_expenses.gif"></div>
 ** expenses-calc-expense-for-day
 #+html: <div> <img src="./screenshots/date.png"></div>
 #+html: <div> <img src="./screenshots/date-not-found.png"></div>
