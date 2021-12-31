@@ -723,19 +723,21 @@ Column number starts with 0, i.e., second column has column no 1."
 				     for category in categories
 				     for details in narratives
 				     if (string-equal (expenses--get-file-name date) file-name)
-				     collect (format "|%s |%.2f |%s |%s |"
-						     date
-						     (string-to-number amount)
-						     (cond (expenses-utils-auto-assign-categies-on-import
-							    (or (or (expenses-utils-auto-assign-category-using-phrases details)
-								    (expenses-utils-auto-assign-category-using-keywords details))
-								category))
-							   (add-one-category-for-all-entry-p one-category)
-							   (add-category-p (completing-read (format "Add category for %s %s %s: " date amount details) expenses-category-list))
-							   (t category))
+				     collect (let ((assigned-details)
+						   (assigned-category))
+					       (setq assigned-details
 						     (cond (add-one-narrative-for-all-entry-p one-narrative)
 							   (add-narrative-p (read-string (format "Add details for %s %s %s: " date amount category)))
-							   (t details)))))
+							   (t details)))
+					       (cond (expenses-utils-auto-assign-categies-on-import
+						      (setq assigned-category (or (expenses-utils-auto-assign-category-using-phrases details)
+										  (expenses-utils-auto-assign-category-using-keywords details)))
+						      (unless assigned-category
+							(setq assigned-category (completing-read (format "Can not auto-assign category for %s %s %s. Add a category: " date amount assigned-details) expenses-category-list))))
+						     (add-one-category-for-all-entry-p (setq assigned-category one-category))
+						     (add-category-p (setq assigned-category (completing-read (format "Add category for %s %s %s: " date amount assigned-details) expenses-category-list)))
+						     (t (setq assigned-category category)))
+					       (format "|%s |%.2f |%s |%s |" date (string-to-number amount) assigned-category assigned-details))))
 	  (insert (string-join new-entries "\n"))
 	  (append-to-file (point-min) (point-max) file-name)))
       (with-current-buffer (find-file-noselect file-name)
