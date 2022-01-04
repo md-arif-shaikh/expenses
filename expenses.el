@@ -730,8 +730,8 @@ Column number starts with 0, i.e., second column has column no 1."
 							   (add-narrative-p (read-string (format "Add details for %s %s %s: " date amount category)))
 							   (t details)))
 					       (cond (expenses-utils-auto-assign-categies-on-import
-						      (setq assigned-category (or (expenses-utils-auto-assign-category-using-phrases details)
-										  (expenses-utils-auto-assign-category-using-keywords details)))
+						      (setq assigned-category (or (expenses-utils-auto-assign-category-using-phrases assigned-details)
+										  (expenses-utils-auto-assign-category-using-keywords assigned-details)))
 						      (unless assigned-category
 							(setq assigned-category (completing-read (format "Can not auto-assign category for %s %s %s. Add a category: " date amount assigned-details) expenses-category-list))))
 						     (add-one-category-for-all-entry-p (setq assigned-category one-category))

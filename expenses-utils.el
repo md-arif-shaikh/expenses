@@ -40,19 +40,21 @@ importing bank statements."
   :type 'alist
   :group 'expenses)
 
-(defvar expenses-utils-keyword-category-ht (ht ("CAFE" "Food")
-					       ("HOTEL" "Food")
-					       ("RESTAURANT" "Food")
-					       ("CHEMIST" "Health")
-					       ("HOSPITAL" "Health")
-					       ("CLINIC" "Health")
-					       ("MEDICAL" "Health")
-					       ("CHECKUP" "Health")
-					       ("ZOO" "Entertainment")
-					       ("MUSEUM" "Entertainment")
-					       ("MOVIE" "Entertainment")
-					       ("CINEMA" "Entertainment"))
-  "Hash-table for keyword category.")
+(defcustom expenses-utils-keyword-category-ht (ht ("CAFE" "Food")
+						  ("HOTEL" "Food")
+						  ("RESTAURANT" "Food")
+						  ("CHEMIST" "Health")
+						  ("HOSPITAL" "Health")
+						  ("CLINIC" "Health")
+						  ("MEDICAL" "Health")
+						  ("CHECKUP" "Health")
+						  ("ZOO" "Entertainment")
+						  ("MUSEUM" "Entertainment")
+						  ("MOVIE" "Entertainment")
+						  ("CINEMA" "Entertainment"))
+  "Hash-table for keyword category."
+  :type 'hash-table
+  :group 'expenses)
 
 (defun expenses-utils-auto-assign-category-using-keywords (narrative)
   "Given a NARRATIVE, auto-assign a category using `expenses-utils-keyword-category-ht`."
