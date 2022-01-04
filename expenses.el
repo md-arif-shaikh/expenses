@@ -317,6 +317,18 @@ Looks for the last two existing files and collect the details."
 	      expense)))
       nil)))
 
+(defun expenses--get-expense-for-year-filtered-by-categories (year category &optional table-name)
+  "Calculate expenses for a YEAR and TABLE-NAME in a CATEGORY.
+YEAR should be YYYY."
+  (let ((dates (cl-loop for month in (number-sequence 1 12) collect (format "%s-%02d-01" year month)))
+	(expenses))
+    (cl-loop for date in dates
+	     collect (let ((expense (expenses--get-expense-for-month-filtered-by-categories date category table-name)))
+		       (if expense
+			   (string-to-number expense)
+			 0)) into expenses
+	     finally return (-sum expenses))))
+
 (defun expenses--ask-for-categories ()
   "Ask for categories from user."
   (if (null expenses-category-list)
@@ -402,7 +414,6 @@ Looks for the last two existing files and collect the details."
 	 (expenses (cl-loop for category in categories
 			    collect (expenses--get-expense-for-month-filtered-by-categories date category)))
 	 (message-strings)
-	 (message-strings)
 	 (sorted-expenses-category-list))
     (setq sorted-expenses-category-list (expenses--sort-expenses (mapcar #'string-to-number expenses) categories))
     (setq expenses (-first-item sorted-expenses-category-list))
@@ -433,6 +444,45 @@ Looks for the last two existing files and collect the details."
 	       (propertize "No expense file is found for" 'face 'expenses-face-message)
 	       (propertize month 'face 'expenses-face-date)
 	       (propertize year 'face 'expenses-face-date)))))
+
+(defun expenses-calc-expense-for-year-filtered-by-categories ()
+  "Calculate expense for a year filtered by categories and show result in a buffer."
+  (interactive)
+  (let* ((year-now (string-to-number (format-time-string "%Y")))
+	 (year (completing-read "Enter year: " (mapcar (lambda (y) (format "%s" y)) (reverse (number-sequence (- year-now 10) year-now  1)))))
+	 (categories (expenses--ask-for-categories))
+	 (buff-name (format "*expenses-%s-%s*" year (string-join categories "-")))
+	 (expenses (cl-loop for category in categories
+			    collect (expenses--get-expense-for-year-filtered-by-categories year category)))
+	 (message-strings)
+	 (sorted-expenses-category-list))
+    (setq sorted-expenses-category-list (expenses--sort-expenses expenses categories))
+    (setq expenses (-first-item sorted-expenses-category-list))
+    (setq categories (-second-item sorted-expenses-category-list))
+    (setq message-strings (cl-loop for category in categories
+				   for expense in expenses
+				   collect (format "%s = %s %11s"
+						   (propertize category 'face 'expenses-face-message)
+						   (or expenses-currency "")
+						   (propertize (format "%.2f" expense) 'face 'expenses-face-expense))))
+    (if expenses
+	(with-current-buffer (generate-new-buffer buff-name)
+	  (insert (propertize "---------------------------------\n" 'face 'expenses-face-message)
+		  (format "Expenses for %s" (propertize year 'face 'expenses-face-date))
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
+		  (string-join message-strings "\n")
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message)
+		  (format "%s = %s %11s"
+			  (propertize "Total expenses" 'face 'expenses-face-message)
+			  expenses-currency
+			  (propertize (format "%.2f" (-sum expenses)) 'face 'expenses-face-expense))
+		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
+	(align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
+	(switch-to-buffer-other-window buff-name))
+      (message "%s %s"
+	       (propertize "No expense file is found for" 'face 'expenses-face-message)
+	       (propertize year 'face 'expenses-face-date)))))
+
 
 (defun expenses--get-expense-for-day (date &optional table-name)
   "Calculate expenses for a DATE and TABLE-NAME."
@@ -569,7 +619,7 @@ Looks for the last two existing files and collect the details."
   (let ((calc-for (completing-read "Calculate expenses for: " '("day" "month" "year"))))
     (cond ((string-equal calc-for "day") (expenses-calc-expense-for-day-filtered-by-categories))
 	  ((string-equal calc-for "month") (expenses-calc-expense-for-month-filtered-by-categories))
-	  ((string-equal calc-for "year") (message "Will be implemented soon...")))))
+	  ((string-equal calc-for "year") (expenses-calc-expense-for-year-filtered-by-categories)))))
 
 ;;; Import data from CSV and add entry to the expense file.
 (defun expenses--read-file (file-name)
