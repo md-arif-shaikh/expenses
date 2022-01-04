@@ -329,6 +329,23 @@ Looks for the last two existing files and collect the details."
 	  (push (completing-read "category: " expenses-category-list) category-list))
 	category-list))))
 
+(defun expenses--sort-expenses (expenses categories)
+  "Sort CATEGORIES and corresponding EXPENSES by most to least."
+  (let ((expense-category-list)
+	(sorted-expense-category-list)
+	(sorted-expenses)
+	(sorted-categories))
+    (setq expense-category-list (cl-loop for expense in expenses
+					 for category in categories
+					 collect (cons expense category)))
+    (setq sorted-expense-category-list (-sort (lambda (n1 n2)
+						(let ((fr1 (car n1))
+						      (fr2 (car n2)))
+						  (> fr1 fr2))) expense-category-list))
+    (setq sorted-expenses (mapcar #'car sorted-expense-category-list))
+    (setq sorted-categories (mapcar #'cdr sorted-expense-category-list))
+    (list sorted-expenses sorted-categories)))
+
 (defun expenses-calc-expense-for-day-filtered-by-categories ()
   "Calculate expense for DATE and TABLE-NAME filtered by CATEGORIES and show in a buffer."
   (interactive)
@@ -340,12 +357,17 @@ Looks for the last two existing files and collect the details."
 	 (buff-name (format "*expenses-%s-%s*" date (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
 			    collect (expenses--get-expense-for-day-filtered-by-categories date category)))
-	 (message-strings (cl-loop for category in categories
+	 (message-strings)
+	 (sorted-expenses-category-list))
+    (setq sorted-expenses-category-list (expenses--sort-expenses (mapcar #'string-to-number expenses) categories))
+    (setq expenses (-first-item sorted-expenses-category-list))
+    (setq categories (-second-item sorted-expenses-category-list))
+    (setq message-strings (cl-loop for category in categories
 				   for expense in expenses
 				   collect (format "%s = %s %11s"
 						   (propertize category 'face 'expenses-face-message)
 						   (or expenses-currency "")
-						   (propertize (format "%.2f" (string-to-number expense)) 'face 'expenses-face-expense)))))
+						   (propertize (format "%.2f" expense) 'face 'expenses-face-expense))))
     (if expenses
 	(with-current-buffer (generate-new-buffer buff-name)
 	  (insert (propertize "---------------------------------\n" 'face 'expenses-face-message)
@@ -379,12 +401,18 @@ Looks for the last two existing files and collect the details."
 	 (buff-name (format "*expenses-%s-%s-%s*" month year (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
 			    collect (expenses--get-expense-for-month-filtered-by-categories date category)))
-	 (message-strings (cl-loop for category in categories
+	 (message-strings)
+	 (message-strings)
+	 (sorted-expenses-category-list))
+    (setq sorted-expenses-category-list (expenses--sort-expenses (mapcar #'string-to-number expenses) categories))
+    (setq expenses (-first-item sorted-expenses-category-list))
+    (setq categories (-second-item sorted-expenses-category-list))
+    (setq message-strings (cl-loop for category in categories
 				   for expense in expenses
 				   collect (format "%s = %s %11s"
 						   (propertize category 'face 'expenses-face-message)
 						   (or expenses-currency "")
-						   (propertize (format "%.2f" (string-to-number expense)) 'face 'expenses-face-expense)))))
+						   (propertize (format "%.2f" expense) 'face 'expenses-face-expense))))
     (if expenses
 	(with-current-buffer (generate-new-buffer buff-name)
 	  (insert (propertize "---------------------------------\n" 'face 'expenses-face-message)
