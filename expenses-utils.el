@@ -58,7 +58,7 @@ importing bank statements."
 
 (defun expenses-utils-auto-assign-category-using-keywords (narrative)
   "Given a NARRATIVE, auto-assign a category using `expenses-utils-keyword-category-ht`."
-  (let* ((words (split-string narrative nil t))
+  (let* ((words (split-string (string-trim narrative "\"" "\"") nil t))
 	(len (length words))
 	(category)
 	(iter 0))
@@ -76,7 +76,7 @@ importing bank statements."
 	 (category)
 	 (iter 0))
     (while (< iter len)
-      (if (string-match-p (regexp-quote (nth iter phrases)) (upcase narrative))
+      (if (string-match-p (regexp-quote (nth iter phrases)) (upcase (string-trim narrative "\"" "\"")))
 	  (progn
 	    (setq category (cdr (assoc (nth iter phrases) expenses-utils-phrases-alist)))
 	    (setq iter len))
