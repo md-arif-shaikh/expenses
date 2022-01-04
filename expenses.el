@@ -320,8 +320,7 @@ Looks for the last two existing files and collect the details."
 (defun expenses--get-expense-for-year-filtered-by-categories (year category &optional table-name)
   "Calculate expenses for a YEAR and TABLE-NAME in a CATEGORY.
 YEAR should be YYYY."
-  (let ((dates (cl-loop for month in (number-sequence 1 12) collect (format "%s-%02d-01" year month)))
-	(expenses))
+  (let ((dates (cl-loop for month in (number-sequence 1 12) collect (format "%s-%02d-01" year month))))
     (cl-loop for date in dates
 	     collect (let ((expense (expenses--get-expense-for-month-filtered-by-categories date category table-name)))
 		       (if expense
@@ -728,7 +727,7 @@ Column number starts with 0, i.e., second column has column no 1."
 	 (test-buff "*expenses-test-import.org*")
 	 (iter 0))
     (when (and expenses-utils-auto-assign-categies-on-import (< narrative-col 0))
-      (error "You have set `expenses-utils-auto-assign-categies-on-import` to t but no narrative column is given."))
+      (error "You have set `expenses-utils-auto-assign-categies-on-import` to t but no narrative column is given!"))
     (with-current-buffer (generate-new-buffer test-buff)
       (insert "|Date | Amount | Category | details|\n")
       (insert "|---|---|----|---|\n")
@@ -778,7 +777,7 @@ Column number starts with 0, i.e., second column has column no 1."
 	 (one-category)
 	 (file-names (delete-dups (-map #'expenses--get-file-name dates))))
     (when (and expenses-utils-auto-assign-categies-on-import (< narrative-col 0))
-      (error "You have set `expenses-utils-auto-assign-categies-on-import` to t but no narrative column is given."))
+      (error "You have set `expenses-utils-auto-assign-categies-on-import` to t but no narrative column is given!"))
     (when (< narrative-col 0)
       (when (string-equal (completing-read "No narrative column chosen. Do you want to add one for each entry?: " '("yes" "no")) "yes")
 	(setq add-narrative-p t)

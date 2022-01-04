@@ -35,8 +35,8 @@
   :group 'expenses)
 
 (defcustom expenses-utils-phrases-alist nil
-  "Alist of common phrases to search for to auto-assign category while
-importing bank statements."
+  "Alist of common phrases to search for to auto-assign category.
+Used for importing bank statements."
   :type 'alist
   :group 'expenses)
 
@@ -70,7 +70,7 @@ importing bank statements."
     category))
 
 (defun expenses-utils-auto-assign-category-using-phrases (narrative)
-  "Given a NARRATIVE, auto-assign a catagory using phrases from `expenses-utils-phrases-alist`"
+  "Given a NARRATIVE, auto-assign a catagory using phrases from `expenses-utils-phrases-alist`."
   (let* ((phrases (mapcar #'car expenses-utils-phrases-alist))
 	 (len (length phrases))
 	 (category)
