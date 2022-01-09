@@ -49,6 +49,10 @@ or if you use ~straight~ then
   #+BEGIN_SRC emacs-lisp
     (setq expenses-currency "$")
   #+END_SRC
+- *Bank profiles* To be able to import expenses from bank statements conveniently, you can set profiles for your banks using the varibale expenses-bank-profiles. This is a list where each element is of the form (bank-name sep date-col debit-col date-format narrative-col category-col)
+  #+begin_src emacs-lisp
+    (setq expenses-category-list '("Bike" "Car" "Clothes" "Coffee" "Electronics" "Entertainment" "Fee" "Food" "Gift" "Health" "Home" "Petrol" "Other" "Sport" "Subscriptions" "Travel" "Transfer" "Utilities"))
+  #+end_src
 
 * Importing Bank Statements
 
@@ -83,13 +87,14 @@ Example CSV export from a bank
   #+begin_src emacs-lisp
   (require 'ht)
 
+  (setq expenses-utils-auto-assign-categies-on-import t)
   (setq expenses-utils-phrases-alist '(
                                        ("BUDGET DIRECT" . "Car")
                                        ("WW METRO" . "Petrol")
                                        ("RS COMPONENTS" . "Electronics")
                                        ))
 
-  (defcustom expenses-utils-keyword-category-ht (ht
+  (setq expenses-utils-keyword-category-ht (ht
                                                  ("7-ELEVEN" "Petrol")
                                                  ("BP" "Petrol")
                                                  ("CALTEX" "Petrol")
@@ -102,12 +107,8 @@ Example CSV export from a bank
                                                  ("MYKI" "Travel")
 
                                                  ("WATER" "Utilities")
-                                                 )
-    "Hash-table for keyword category."
-    :type 'hash-table
-    :group 'expenses)
+                                                 ))
 
-  (setq expenses-category-list '("Bike" "Car" "Clothes" "Coffee" "Electronics" "Entertainment" "Fee" "Food" "Gift" "Health" "Home" "Petrol" "Other" "Sport" "Subscriptions" "Travel" "Transfer" "Utilities"))
   #+end_src
 
 
