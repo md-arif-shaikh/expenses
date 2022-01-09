@@ -8,6 +8,9 @@
 - [[#how-to-install][How to install]]
 - [[#custom-settings][Custom settings]]
 - [[#importing-bank-statements][Importing Bank Statements]]
+  - [[#import-bank-statements-with-profile][Import bank statements with profile]]
+  - [[#auto-assign-categories][Auto assign categories]]
+  - [[#override-phrases-and-keywords][Override phrases and keywords]]
 - [[#interactive-functions][Interactive functions]]
 - [[#screenshots][Screenshots]]
   - [[#expenses-add-expense][expenses-add-expense]]
@@ -52,44 +55,42 @@ or if you use ~straight~ then
   #+END_SRC
 
 * Importing Bank Statements
-You can import directly from Bank CSV exports. Example CSV export from a bank
+You can import directly from Bank CSV exports using ~expenses-import-expense~. Example CSV export from a bank
 : Bank Account,Date,Narrative,Debit Amount,Credit Amount,Balance,Categories,Serial
 : 5544,05/12/2021,"THAT CAFE SYDNEY AUS",4.00,,0.00,OTHER,
 
-- *Simple import use* with  ~expenses-import-expense-with-bank-profile~
 First look at the CSV to determine the order remember that it starts at zero for the first column.
-
-- *Bank profiles* To be able to import expenses from bank statements conveniently, you can set profiles
-  for your banks using the varibale ~expenses-bank-profiles~. This is a list where each element
-  is of the form ~(bank-name sep date-col debit-col date-format narrative-col category-col)~
-  #+BEGIN_SRC emacs-lisp
-    (setq expenses-bank-profiles (("EXAMPLE-BANK" "," 1 3 "dd/mm/yyyy" 2 -1)
-				  ("ANOTHER-BANK" "\t" 1 4 "yyyy/mm/dd" 2 3)))
-  #+END_SRC
-  NOTE: If category is set to -1 then you will be prompted to assign categories for each line.
-
-- *Auto assign categories* You can auto assign based on keyword or phrase. To set this up you
-  can override the default phrases and keywords in your init.el file
-  with the following
-  #+begin_src emacs-lisp
-    (require 'ht)
-    (setq expenses-utils-auto-assign-categies-on-import t)
-    (setq expenses-utils-phrases-alist '(("BUDGET DIRECT" . "Car")
-					 ("WW METRO" . "Petrol")
-					 ("RS COMPONENTS" . "Electronics")))
-    (setq expenses-utils-keyword-category-ht (ht ("7-ELEVEN" "Petrol")
-						 ("BP" "Petrol")
-						 ("CALTEX" "Petrol")
-						 ("UNITED" "Petrol")
-					     
-						 ("GYM" "Sport")
-					     
-						 ("YOUTUBE" "Subscriptions")
-					     
-						 ("MYKI" "Travel")
-					     
-						 ("WATER" "Utilities")))
-  #+end_src
+NOTE: If category is set to -1 then you will be prompted to assign categories for each line.
+** Import bank statements with profile
+To be able to import expenses from bank statements conveniently, you can set profiles
+for your banks using the varibale ~expenses-bank-profiles~. This is a list where each element
+is of the form ~(bank-name sep date-col debit-col date-format narrative-col category-col)~
+#+BEGIN_SRC emacs-lisp
+  (setq expenses-bank-profiles (("EXAMPLE-BANK" "," 1 3 "dd/mm/yyyy" 2 -1)
+				("ANOTHER-BANK" "\t" 1 4 "yyyy/mm/dd" 2 3)))
+#+END_SRC
+Then you import bank statements using ~expenses-import-expense-with-bank-profile~
+** Auto assign categories
+You can auto assign based on keyword or phrase. To turn this on first do the following
+#+BEGIN_SRC emacs-lisp
+  (setq expenses-utils-auto-assign-categies-on-import t)
+#+END_SRC
+** Override phrases and keywords
+You can override the default phrases and keywords in your init.el file with the following
+#+begin_src emacs-lisp
+  (require 'ht)
+  (setq expenses-utils-phrases-alist '(("BUDGET DIRECT" . "Car")
+				       ("WW METRO" . "Petrol")
+				       ("RS COMPONENTS" . "Electronics")))
+  (setq expenses-utils-keyword-category-ht (ht ("7-ELEVEN" "Petrol")
+					       ("BP" "Petrol")
+					       ("CALTEX" "Petrol")
+					       ("UNITED" "Petrol")
+					       ("GYM" "Sport")
+					       ("YOUTUBE" "Subscriptions")
+					       ("MYKI" "Travel")
+					       ("WATER" "Utilities")))
+#+end_src
 * Interactive functions
 |-------------------------------------------+----------------------------------------------------------------------|
 | Interactive functions                     | Actions                                                              |
