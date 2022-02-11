@@ -825,8 +825,6 @@ Column number starts with 0, i.e., second column has column no 1."
 	(org-table-align)
 	(write-file file-name)))))
 
-(setq expenses-utils-ignore-phrases-list '("Ltd Melbourne"))
-
 (defun expenses-import-expense-with-bank-profile (file-name bank-name)
   "Import expenses from a CSV file with FILE-NAME for a bank with BANK-NAME."
   (interactive
