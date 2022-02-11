@@ -806,22 +806,26 @@ Column number starts with 0, i.e., second column has column no 1."
 						     (cond (add-one-narrative-for-all-entry-p one-narrative)
 							   (add-narrative-p (read-string (format "Add details for %s %s %s: " date amount category)))
 							   (t details)))
-					       (cond (expenses-utils-auto-assign-categies-on-import
-						      (setq assigned-category (or (expenses-utils-auto-assign-category-using-phrases assigned-details)
-										  (expenses-utils-auto-assign-category-using-keywords assigned-details)))
-						      (unless assigned-category
-							(setq assigned-category (completing-read (format "Can not auto-assign category for %s %s %s. Add a category: " date amount assigned-details) expenses-category-list))))
-						     (add-one-category-for-all-entry-p (setq assigned-category one-category))
-						     (add-category-p (setq assigned-category (completing-read (format "Add category for %s %s %s: " date amount assigned-details) expenses-category-list)))
-						     (t (setq assigned-category category)))
-					       (format "|%s |%.2f |%s |%s |" date (string-to-number amount) assigned-category assigned-details))))
-	  (insert (string-join new-entries "\n"))
+					       (if (expenses-utils-ignore-transaction? assigned-details expenses-utils-ignore-keywords-list expenses-utils-ignore-phrases-list)
+						   ""
+						 (cond (expenses-utils-auto-assign-categies-on-import
+							(setq assigned-category (or (expenses-utils-auto-assign-category-using-phrases assigned-details)
+										    (expenses-utils-auto-assign-category-using-keywords assigned-details)))
+							(unless assigned-category
+							  (setq assigned-category (completing-read (format "Can not auto-assign category for %s %s %s. Add a category: " date amount assigned-details) expenses-category-list))))
+						       (add-one-category-for-all-entry-p (setq assigned-category one-category))
+						       (add-category-p (setq assigned-category (completing-read (format "Add category for %s %s %s: " date amount assigned-details) expenses-category-list)))
+						       (t (setq assigned-category category)))
+						 (format "|%s |%.2f |%s |%s |" date (string-to-number amount) assigned-category assigned-details)))))
+	  (insert (string-join (-remove #'string-blank-p new-entries) "\n"))
 	  (append-to-file (point-min) (point-max) file-name)))
       (with-current-buffer (find-file-noselect file-name)
 	(goto-char (point-max))
 	(forward-line -2)
 	(org-table-align)
 	(write-file file-name)))))
+
+(setq expenses-utils-ignore-phrases-list '("Ltd Melbourne"))
 
 (defun expenses-import-expense-with-bank-profile (file-name bank-name)
   "Import expenses from a CSV file with FILE-NAME for a bank with BANK-NAME."
