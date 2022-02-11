@@ -11,6 +11,7 @@
   - [[#import-bank-statements-with-profile][Import bank statements with profile]]
   - [[#auto-assign-categories][Auto assign categories]]
   - [[#override-phrases-and-keywords][Override phrases and keywords]]
+  - [[#ignore-transaction][Ignore transaction]]
 - [[#interactive-functions][Interactive functions]]
 - [[#screenshots][Screenshots]]
   - [[#expenses-add-expense][expenses-add-expense]]
@@ -91,6 +92,15 @@ You can override the default phrases and keywords in your init.el file with the 
 					       ("MYKI" "Travel")
 					       ("WATER" "Utilities")))
 #+end_src
+** Ignore transaction
+Sometime you may want to ignore some transactions. This could be done by providing a ~list~ of ~keywords~ or a ~list~ of ~phrases~. While importing your
+bank statements, it would look for words or phrases in the provided lists and ignore the transaction if it finds one. There are two varibales to set here.
+First one is the ~expenses-utils-ignore-keywords-list~ for providing a ~list~ of ~keywords~ and the second one is the ~expenses-utils-ignore-phrases-list~ for providing
+a ~list~ of ~phrases~. Examples,
+#+BEGIN_SRC emacs-lisp
+  (setq expenses-utils-ignore-keywords-list '("keyword1" "keyword2"))
+  (setq expenses-utils-ignore-phrases-list '("this is phrase one" "this is phrase 2"))
+#+END_SRC
 * Interactive functions
 |-------------------------------------------+----------------------------------------------------------------------|
 | Interactive functions                     | Actions                                                              |
