@@ -4,7 +4,7 @@
 
 ;; Author: Md Arif Shaikh <arifshaikh.astro@gmail.com>
 ;; Keywords: tools
-;; Version: 0.0.1
+;; Version: 0.1.0
 ;; Homepage: https://github.com/md-arif-shaikh/expenses
 ;; URL: https://github.com/md-arif-shaikh/expenses
 

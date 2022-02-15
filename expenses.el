@@ -4,7 +4,7 @@
 
 ;; Author: Md Arif Shaikh <arifshaikh.astro@gmail.com>
 ;; Keywords: expense tracking, convenience
-;; Version: 0.0.1
+;; Version: 0.1.0
 ;; Homepage: https://github.com/md-arif-shaikh/expenses
 ;; URL: https://github.com/md-arif-shaikh/expenses
 ;; Package-Requires: ((emacs "26.1") (dash "2.19.1") (ht "2.3"))
