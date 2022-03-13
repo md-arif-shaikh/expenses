@@ -65,6 +65,11 @@
   :type 'boolean
   :group 'expenses)
 
+(defcustom expenses-python-path "~/miniconda3/bin/python"
+  "Path to python."
+  :type 'str
+  :group 'expenses)
+
 (defcustom expenses-bank-profiles nil
   "Set profile for bank to use for importing expenses.
 Alist bank profiles.  Each element has the form
@@ -443,6 +448,35 @@ YEAR should be YYYY."
 	       (propertize "No expense file is found for" 'face 'expenses-face-message)
 	       (propertize month 'face 'expenses-face-date)
 	       (propertize year 'face 'expenses-face-date)))))
+
+(defun expenses-pie-expense-for-month-filtered-by-categories ()
+  "Create a pie chart of expenses for month filtered by categories and show result in a buffer."
+  (interactive)
+  (let* ((date (org-read-date nil nil nil "Date: "))
+	 (categories (expenses--ask-for-categories))
+	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
+	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
+	 (buff-name (format "*expenses-%s-%s-%s*" month year (string-join categories "-")))
+	 (expenses (cl-loop for category in categories
+			    collect (expenses--get-expense-for-month-filtered-by-categories date category)))
+	 (message-strings)
+	 (sorted-expenses-category-list)
+	 (buff-name (format "%s%s" (temporary-file-directory) "pie.py")))
+    (setq sorted-expenses-category-list (expenses--sort-expenses (mapcar #'string-to-number expenses) categories))
+    (setq expenses (-first-item sorted-expenses-category-list))
+    (setq categories (-second-item sorted-expenses-category-list))
+    (with-current-buffer (generate-new-buffer buff-name)
+      (insert "import matplotlib.pyplot as plt\n"
+	      (format "labels=[\"%s\"]\n" (string-join categories "\", \""))
+	      (format "sizes=[%s]\n" (string-join (mapcar #'number-to-string expenses) ", "))
+	      "fig, ax = plt.subplots()\n"
+	      "ax.pie(sizes, labels=labels, autopct='%1.1f%%')\n"
+	      "ax.axis('equal')\n"
+	      "plt.show()")
+      (write-file buff-name)
+      (shell-command (format "%s %s" expenses-python-path buff-name)))
+    (kill-buffer "pie.py")
+    (delete-file buff-name)))
 
 (defun expenses-calc-expense-for-year-filtered-by-categories ()
   "Calculate expense for a year filtered by categories and show result in a buffer."
