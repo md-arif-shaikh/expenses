@@ -116,7 +116,7 @@ Alist bank profiles.  Each element has the form
 (defun expenses--create-user-directory-name (user)
   "Create user directory name based on USER."
   (if user
-      (concat (downcase (replace-in-string " " "_" user)) "/")
+      (concat (downcase (replace-regexp-in-string " " "_" user)) "/")
     ""))
 
 (defun expenses--get-file-name (date &optional user)
@@ -209,7 +209,6 @@ Looks for the last two existing files and collect the details."
   "Get directory for USER."
   (if user
       (let ((user-dir (concat expenses-directory user)))
-	(file-exists-p user-dir)
 	(unless (file-exists-p user-dir)
 	  (setq user-dir (concat expenses-directory (expenses--create-user-directory-name user)))
 	  (make-directory user-dir)))
@@ -483,10 +482,8 @@ Optional argument USER for user name."
 	 (categories (expenses--ask-for-categories))
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
-	 (buff-name (format "*expenses-%s-%s-%s*" month year (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
 			    collect (expenses--get-expense-for-month-filtered-by-categories date category user)))
-	 (message-strings)
 	 (sorted-expenses-category-list)
 	 (buff-name (format "%s%s" (temporary-file-directory) "pie.py")))
     (setq sorted-expenses-category-list (expenses--sort-expenses (mapcar #'string-to-number expenses) categories))
