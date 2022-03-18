@@ -233,7 +233,7 @@ Looks for the last two existing files and collect the details."
       (when expenses-add-hline-in-org (insert "|--|--|--|--|\n"))
       (append-to-file (point-min) (point-max) file-name))
     (when (string-equal (completing-read "Add another expense: " '("no" "yes")) "yes")
-      (expenses-add-expense))
+      (expenses-add-expense user))
     (with-current-buffer (find-file-noselect file-name)
       (goto-char (point-max))
       (forward-line -1)
