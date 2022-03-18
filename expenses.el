@@ -113,10 +113,16 @@ Alist bank profiles.  Each element has the form
 (setq expenses-currency "Rs.")
 (setq expenses-month-names '("Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
 
-(defun expenses--get-file-name (date)
-  "Get the name of file from the DATE."
+(defun expenses--create-user-directory-name (user)
+  "Create user directory name based on USER."
+  (if user
+      (concat (downcase (replace-in-string " " "_" user)) "/")
+    ""))
+
+(defun expenses--get-file-name (date &optional user)
+  "Get the name of file from the DATE.  Optionally provide USER name."
   (let ((year-month (substring date 0 7)))
-    (concat expenses-directory year-month "-" "expenses.org")))
+    (concat expenses-directory (expenses--create-user-directory-name user) year-month "-" "expenses.org")))
 
 (defun expenses--get-date (file-name)
   "Get the date from a given FILE-NAME."
@@ -138,9 +144,9 @@ Alist bank profiles.  Each element has the form
       (forward-line 2)
       (goto-char (org-table-begin)))))
 
-(defun expenses--get-details-list (date &optional table-name)
-  "Get the details list for a given month using DATE and an optional TABLE-NAME."
-  (let ((file-name (expenses--get-file-name date))
+(defun expenses--get-details-list (date &optional user table-name)
+  "Get the details list for a given month using DATE and an optional USER or TABLE-NAME."
+  (let ((file-name (expenses--get-file-name date user))
 	(buff-name (concat (temporary-file-directory) "test.org"))
 	(details-string-list '()))
     (with-current-buffer (generate-new-buffer buff-name)
@@ -171,19 +177,19 @@ Alist bank profiles.  Each element has the form
 				  (> fr1 fr2))) item-frequency-alist))
     (mapcar #'car sorted-alist)))
 
-(defun expenses--get-frequently-used-details-list (date)
-  "For given DATE, get details from the already existing data.
+(defun expenses--get-frequently-used-details-list (date &optional user)
+  "For given DATE and optional USER, get details from the already existing data.
 Looks for the last two existing files and collect the details."
   (let* ((month (format-time-string "%m" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (last-month-date (org-read-date nil nil "-1m" nil (encode-time (list 0 0 0 1 (string-to-number month) (string-to-number year) nil nil nil))))
 	 (details-strings-list (-remove #'string-blank-p (-flatten (cl-loop for d in (list date last-month-date)
-									    collect (expenses--get-details-list d))))))
+									    collect (expenses--get-details-list d user))))))
     (expenses--sort-by-frequency details-strings-list)))
 
-(defun expenses--create-initial-file (date)
-  "Create a file for a DATE with initial structure."
-  (let ((file-name (expenses--get-file-name date))
+(defun expenses--create-initial-file (date &optional user)
+  "Create a file for a DATE and optional USER with initial structure."
+  (let ((file-name (expenses--get-file-name date user))
 	(month (format-time-string "%B" (org-time-string-to-seconds date)))
 	(year (format-time-string "%Y" (org-time-string-to-seconds date))))
     (with-temp-buffer
@@ -195,18 +201,33 @@ Looks for the last two existing files and collect the details."
       (insert "|--|--|--|--|\n")
       (append-to-file (point-min) (point-max) file-name))))
 
-(defun expenses-add-expense ()
-  "Add expense."
-  (interactive)
+(defun expenses-users ()
+  "Get the list of users."
+  (directory-files expenses-directory nil directory-files-no-dot-files-regexp))
+
+(defun expenses-user-dir (user)
+  "Get directory for USER."
+  (if user
+      (let ((user-dir (concat expenses-directory user)))
+	(file-exists-p user-dir)
+	(unless (file-exists-p user-dir)
+	  (setq user-dir (concat expenses-directory (expenses--create-user-directory-name user)))
+	  (make-directory user-dir)))
+    expenses-directory))
+
+(defun expenses-add-expense (user)
+  "Add expense for an USER."
+  (interactive (list (completing-read "Add expenses for: " (expenses-users))))
+  (expenses-user-dir user)
   (let* ((date (org-read-date nil nil nil "Date: "))
 	 (amount (read-number "Amount: "))
 	 (category (completing-read "Category: " expenses-category-list))
-	 (details (completing-read "Details: " (expenses--get-frequently-used-details-list date)))
-	 (file-name (expenses--get-file-name date)))
+	 (details (completing-read "Details: " (expenses--get-frequently-used-details-list date user)))
+	 (file-name (expenses--get-file-name date user)))
     (when (string-blank-p category)
       (setq category "Others"))
     (when (not (file-exists-p file-name))
-      (expenses--create-initial-file date))
+      (expenses--create-initial-file date user))
     (with-temp-buffer
       (insert (format "|%s |%.2f |%s |%s |\n" date amount category details))
       (when expenses-add-hline-in-org (insert "|--|--|--|--|\n"))
@@ -219,11 +240,11 @@ Looks for the last two existing files and collect the details."
       (org-table-align)
       (write-file file-name))))
 
-(defun expenses-view-expense ()
-  "View expense."
-  (interactive)
+(defun expenses-view-expense (user)
+  "View expense for an USER."
+  (interactive (list (completing-read "View expenses for: " (expenses-users))))
   (let* ((date (org-read-date nil nil nil "Date: "))
-	 (file-name (expenses--get-file-name date)))
+	 (file-name (expenses--get-file-name date user)))
     (if (file-exists-p file-name)
 	(find-file-other-window file-name)
       (let ((month (format-time-string "%B" (org-time-string-to-seconds date)))
@@ -276,9 +297,10 @@ Looks for the last two existing files and collect the details."
 	     collect amount into filtered-amounts
 	     finally return (-sum filtered-amounts))))
 
-(defun expenses--get-expense-for-day-filtered-by-categories (date categories &optional table-name)
-  "Calculate expenses for a DATE and TABLE-NAME filtered by CATEGORIES."
-  (let ((file-name (expenses--get-file-name date)))
+(defun expenses--get-expense-for-day-filtered-by-categories (date categories &optional user table-name)
+  "Calculate expenses for a DATE and TABLE-NAME filtered by CATEGORIES.
+Optional argument USER ."
+  (let ((file-name (expenses--get-file-name date user)))
     (if (file-exists-p file-name)
 	(let ((buff-name (concat (temporary-file-directory) "test.org")))
           (with-current-buffer (generate-new-buffer buff-name)
@@ -299,9 +321,10 @@ Looks for the last two existing files and collect the details."
 	      expense)))
       nil)))
 
-(defun expenses--get-expense-for-month-filtered-by-categories (date categories &optional table-name)
-  "Calculate expenses for a DATE and TABLE-NAME filtered by CATEGORIES."
-  (let ((file-name (expenses--get-file-name date)))
+(defun expenses--get-expense-for-month-filtered-by-categories (date categories &optional user table-name)
+  "Calculate expenses for a DATE and TABLE-NAME filtered by CATEGORIES.
+Optional argument USER for user name."
+  (let ((file-name (expenses--get-file-name date user)))
     (if (file-exists-p file-name)
 	(let ((buff-name (concat (temporary-file-directory) "test.org")))
           (with-current-buffer (generate-new-buffer buff-name)
@@ -322,12 +345,13 @@ Looks for the last two existing files and collect the details."
 	      expense)))
       nil)))
 
-(defun expenses--get-expense-for-year-filtered-by-categories (year category &optional table-name)
+(defun expenses--get-expense-for-year-filtered-by-categories (year category &optional user table-name)
   "Calculate expenses for a YEAR and TABLE-NAME in a CATEGORY.
-YEAR should be YYYY."
+YEAR should be YYYY.
+Optional argument USER for user name."
   (let ((dates (cl-loop for month in (number-sequence 1 12) collect (format "%s-%02d-01" year month))))
     (cl-loop for date in dates
-	     collect (let ((expense (expenses--get-expense-for-month-filtered-by-categories date category table-name)))
+	     collect (let ((expense (expenses--get-expense-for-month-filtered-by-categories date category user table-name)))
 		       (if expense
 			   (string-to-number expense)
 			 0)) into expenses
@@ -363,16 +387,17 @@ YEAR should be YYYY."
     (list sorted-expenses sorted-categories)))
 
 (defun expenses-calc-expense-for-day-filtered-by-categories ()
-  "Calculate expense for DATE and TABLE-NAME filtered by CATEGORIES and show in a buffer."
+  "Calculate expense for an USER, DATE and TABLE-NAME filtered by CATEGORIES and show in a buffer."
   (interactive)
-  (let* ((date (org-read-date nil nil nil "Date: "))
+  (let* ((user (completing-read "Select user: " (expenses-users)))
+	 (date (org-read-date nil nil nil "Date: "))
 	 (categories (expenses--ask-for-categories))
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
 	 (buff-name (format "*expenses-%s-%s*" date (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
-			    collect (expenses--get-expense-for-day-filtered-by-categories date category)))
+			    collect (expenses--get-expense-for-day-filtered-by-categories date category user)))
 	 (message-strings)
 	 (sorted-expenses-category-list))
     (setq sorted-expenses-category-list (expenses--sort-expenses (mapcar #'string-to-number expenses) categories))
@@ -397,7 +422,7 @@ YEAR should be YYYY."
 		  (format "%s = %s %11s"
 			  (propertize "Total expenses" 'face 'expenses-face-message)
 			  expenses-currency
-			  (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-day-filtered-by-categories date categories))) 'face 'expenses-face-expense))
+			  (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-day-filtered-by-categories date categories user))) 'face 'expenses-face-expense))
 		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
 	  (align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
 	  (switch-to-buffer-other-window buff-name))
@@ -410,13 +435,14 @@ YEAR should be YYYY."
 (defun expenses-calc-expense-for-month-filtered-by-categories ()
   "Calculate expense for month filtered by categories and show result in a buffer."
   (interactive)
-  (let* ((date (org-read-date nil nil nil "Date: "))
+  (let* ((user (completing-read "Select user: " (expenses-users)))
+	 (date (org-read-date nil nil nil "Date: "))
 	 (categories (expenses--ask-for-categories))
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (buff-name (format "*expenses-%s-%s-%s*" month year (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
-			    collect (expenses--get-expense-for-month-filtered-by-categories date category)))
+			    collect (expenses--get-expense-for-month-filtered-by-categories date category user)))
 	 (message-strings)
 	 (sorted-expenses-category-list))
     (setq sorted-expenses-category-list (expenses--sort-expenses (mapcar #'string-to-number expenses) categories))
@@ -440,7 +466,7 @@ YEAR should be YYYY."
 		  (format "%s = %s %11s"
 			  (propertize "Total expenses" 'face 'expenses-face-message)
 			  expenses-currency
-			  (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-month-filtered-by-categories date categories))) 'face 'expenses-face-expense))
+			  (propertize (format "%.2f" (string-to-number (expenses--get-expense-for-month-filtered-by-categories date categories user))) 'face 'expenses-face-expense))
 		  (propertize "\n---------------------------------\n" 'face 'expenses-face-message))
 	(align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
 	(switch-to-buffer-other-window buff-name))
@@ -452,13 +478,14 @@ YEAR should be YYYY."
 (defun expenses-pie-expense-for-month-filtered-by-categories ()
   "Create a pie chart of expenses for month filtered by categories and show result in a buffer."
   (interactive)
-  (let* ((date (org-read-date nil nil nil "Date: "))
+  (let* ((user (completing-read "Select user: " (expenses-users)))
+	 (date (org-read-date nil nil nil "Date: "))
 	 (categories (expenses--ask-for-categories))
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (buff-name (format "*expenses-%s-%s-%s*" month year (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
-			    collect (expenses--get-expense-for-month-filtered-by-categories date category)))
+			    collect (expenses--get-expense-for-month-filtered-by-categories date category user)))
 	 (message-strings)
 	 (sorted-expenses-category-list)
 	 (buff-name (format "%s%s" (temporary-file-directory) "pie.py")))
@@ -481,12 +508,13 @@ YEAR should be YYYY."
 (defun expenses-calc-expense-for-year-filtered-by-categories ()
   "Calculate expense for a year filtered by categories and show result in a buffer."
   (interactive)
-  (let* ((year-now (string-to-number (format-time-string "%Y")))
+  (let* ((user (completing-read "Select user: " (expenses-users)))
+	 (year-now (string-to-number (format-time-string "%Y")))
 	 (year (completing-read "Enter year: " (mapcar (lambda (y) (format "%s" y)) (reverse (number-sequence (- year-now 10) year-now  1)))))
 	 (categories (expenses--ask-for-categories))
 	 (buff-name (format "*expenses-%s-%s*" year (string-join categories "-")))
 	 (expenses (cl-loop for category in categories
-			    collect (expenses--get-expense-for-year-filtered-by-categories year category)))
+			    collect (expenses--get-expense-for-year-filtered-by-categories year category user)))
 	 (message-strings)
 	 (sorted-expenses-category-list))
     (setq sorted-expenses-category-list (expenses--sort-expenses expenses categories))
@@ -517,9 +545,9 @@ YEAR should be YYYY."
 	       (propertize year 'face 'expenses-face-date)))))
 
 
-(defun expenses--get-expense-for-day (date &optional table-name)
-  "Calculate expenses for a DATE and TABLE-NAME."
-  (let ((file-name (expenses--get-file-name date)))
+(defun expenses--get-expense-for-day (date &optional user table-name)
+  "Calculate expenses for a DATE and optional USER, TABLE-NAME."
+  (let ((file-name (expenses--get-file-name date user)))
     (if (file-exists-p file-name)
 	(let ((buff-name (concat (temporary-file-directory) "test.org")))
           (with-current-buffer (generate-new-buffer buff-name)
@@ -538,14 +566,15 @@ YEAR should be YYYY."
 	      expense)))
       nil)))
 
-(defun expenses-calc-expense-for-day (date &optional table-name)
-  "Calculate expense for DATE and TABLE-NAME and show message."
+(defun expenses-calc-expense-for-day (date &optional user table-name)
+  "Calculate expense for DATE and optional USER, TABLE-NAME and show message."
   (interactive
-   (list (org-read-date nil nil nil "Date: ")))
+   (list (org-read-date nil nil nil "Date: ")
+	 (completing-read "Select user: " (expenses-users))))
   (let* ((month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
-	 (expenses (expenses--get-expense-for-day date table-name)))
+	 (expenses (expenses--get-expense-for-day date user table-name)))
     (if expenses
 	(message "%s %s %s %s = %s %s"
 		 (propertize "Total expenses for" 'face 'expenses-face-message)
@@ -560,21 +589,22 @@ YEAR should be YYYY."
 	       (propertize day 'face 'expenses-face-date)
 	       (propertize year 'face 'expenses-face-date)))))
 
-(defun expenses--get-expense-for-month (date)
-  "Calculate expense for a month specified by any DATE in that month in format YYYY-MM-DD."
-  (let* ((file-name (expenses--get-file-name date)))
+(defun expenses--get-expense-for-month (date user)
+  "Calculate expense for an USER in a month specified by any DATE in that month in format YYYY-MM-DD."
+  (let* ((file-name (expenses--get-file-name date user)))
     (if (file-exists-p file-name)
 	(expenses--get-expense-for-file file-name)
       nil)))
 
-(defun expenses-calc-expense-for-month (date)
-  "Calculate expense for a month specified by any DATE in that month in format YYYY-MM-DD."
+(defun expenses-calc-expense-for-month (date user)
+  "Calculate expense for an USER in a month specified by any DATE in that month in format YYYY-MM-DD."
   (interactive
-   (let ((date (org-read-date nil nil nil "Date: ")))
-     (list date)))
+   (let ((date (org-read-date nil nil nil "Date: "))
+	 (user (completing-read "Select user: " (expenses-users))))
+     (list date user)))
   (let* ((month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
-	 (expenses (expenses--get-expense-for-month date)))
+	 (expenses (expenses--get-expense-for-month date user)))
     (if expenses
 	(message "%s %s %s = %s %s"
 		 (propertize "Total expenses for" 'face 'expenses-face-message)
@@ -587,12 +617,12 @@ YEAR should be YYYY."
 	       (propertize month 'face 'expenses-face-date)
 	       (propertize year 'face 'expenses-face-date)))))
 
-(defun expenses--get-expense-for-year (year &optional start end)
-  "Calculate expenses for a YEAR with optional arguments START month and END month START and END should be 1-12."
+(defun expenses--get-expense-for-year (year user &optional start end)
+  "Calculate expenses for an USER in a YEAR with optional arguments START month and END month START and END should be 1-12."
   (let* ((expenses-list (cl-loop for n in (number-sequence (or start 1) (or end 12))
 				      collect (let* ((date (format "%s-%02d-01" year n))
 						     (month (format-time-string "%B" (org-time-string-to-seconds date))))
-						(cons month (expenses--get-expense-for-month date)))))
+						(cons month (expenses--get-expense-for-month date user)))))
 	 (months (mapcar #'car expenses-list))
 	 (expenses (mapcar #'cdr expenses-list))
 	 (total-expense (-sum (-map-when 'stringp #'string-to-number (-replace nil 0 expenses)))))
@@ -600,15 +630,16 @@ YEAR should be YYYY."
       ("expenses" . ,expenses)
       ("total" . ,total-expense))))
 
-(defun expenses-calc-expense-for-months (year &optional start end)
-  "Calculate expenses for months between START and END of a YEAR."
+(defun expenses-calc-expense-for-months (year user &optional start end)
+  "Calculate expenses for an USER in months between START and END of a YEAR."
   (interactive
    (let* ((current-year (string-to-number (format-time-string "%Y")))
 	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num))))
+	  (user (completing-read "Select user: " (expenses-users)))
 	  (picked-start (1+ (-elem-index (completing-read "Start month: " expenses-month-names) expenses-month-names)))
 	  (picked-end (1+ (-elem-index (completing-read "End month: " expenses-month-names) expenses-month-names))))
-     (list picked-year picked-start picked-end)))
-  (let* ((expense-alist (expenses--get-expense-for-year year start end))
+     (list picked-year user picked-start picked-end)))
+  (let* ((expense-alist (expenses--get-expense-for-year year user start end))
 	 (months (cdr (assoc "months" expense-alist)))
 	 (expenses (cdr (assoc "expenses" expense-alist)))
 	 (total (cdr (assoc "total" expense-alist)))
@@ -638,13 +669,14 @@ YEAR should be YYYY."
       (align-regexp (point-min) (point-max) "\\(\\s-*\\)="))
     (switch-to-buffer-other-window buffer-name)))
 
-(defun expenses-calc-expense-for-year (year)
-  "Calculate expenses in a YEAR."
+(defun expenses-calc-expense-for-year (year user)
+  "Calculate expenses in a YEAR for USER."
   (interactive
    (let* ((current-year (string-to-number (format-time-string "%Y")))
-	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num)))))
-     (list picked-year)))
-  (expenses-calc-expense-for-months year))
+	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num))))
+	  (user (completing-read "Select user: " (expenses-users))))
+     (list picked-year user)))
+  (expenses-calc-expense-for-months year user))
 
 (defun expenses-calc-expense-by-category ()
   "Calculate expenses by category."
@@ -865,7 +897,7 @@ Column number starts with 0, i.e., second column has column no 1."
    (list (read-file-name "Enter file name: ")
 	 (if expenses-bank-profiles
 	     (completing-read "Enter bank name: " (mapcar #'car expenses-bank-profiles))
-	   (user-error "No bank profiles are found. Set the bank profile using `expenses-bank-profiles`!"))))
+	   (user-error "No bank profiles are found.  Set the bank profile using `expenses-bank-profiles`!"))))
    (let* ((profile (cdr (assoc bank-name expenses-bank-profiles)))
 	  (sep (-first-item profile))
 	  (date-col (-second-item profile))
