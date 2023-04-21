@@ -573,8 +573,10 @@ Optional argument USER for user name."
 	(current date-from)
 	(total 0)
 	(total-string ""))
+    (when (get-buffer buffer-name)
+      (kill-buffer buffer-name))
     (with-current-buffer (generate-new-buffer buffer-name)
-      (while (string< current date-to)
+      (while (or (string< current date-to) (string-equal current date-to))
 	(let ((amount (expenses--get-expense-for-day current user)))
 	  (when amount
 	    (insert (format "%s = %10s\n" (propertize current 'face 'expenses-face-date) amount))
