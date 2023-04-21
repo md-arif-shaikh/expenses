@@ -563,6 +563,32 @@ Optional argument USER for user name."
 	      expense)))
       nil)))
 
+(defun expenses-calc-expenses-for-date-range (date-from date-to &optional user)
+  "Calculate expenses for a range of dates between DATE-FROM to DATE-TO for USER."
+  (interactive
+   (list (org-read-date nil nil nil "Date From: ")
+	 (org-read-date nil nil nil "Date To: ")
+	 (completing-read "Select user: " (expenses-users))))
+  (let ((buffer-name (format "*expenses-%s-%s-%s*" date-from date-to user))
+	(current date-from)
+	(total 0)
+	(total-string ""))
+    (with-current-buffer (generate-new-buffer buffer-name)
+      (while (string< current date-to)
+	(let ((amount (expenses--get-expense-for-day current user)))
+	  (when amount
+	    (insert (format "%s = %10s\n" (propertize current 'face 'expenses-face-date) amount))
+	    (setq total (+ total (string-to-number amount)))))
+	(setq current (org-read-date nil nil "++1" nil (org-time-string-to-time current))))
+      (when (> total 0)
+	(insert "----------------------------\n"))
+      (setq total-string (format "%s = %10s" (propertize "Total" 'face 'expenses-face-message) (propertize (number-to-string total) 'face 'expenses-face-expense)))
+      (insert total-string)
+      (align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
+      (read-only-mode)
+      (message total-string)
+      (switch-to-buffer-other-window buffer-name))))
+
 (defun expenses-calc-expense-for-day (date &optional user table-name)
   "Calculate expense for DATE and optional USER, TABLE-NAME and show message."
   (interactive
