@@ -39,6 +39,7 @@
 (require 'org)
 (require 'dash)
 (require 'expenses-utils)
+(require 'time-zone)
 
 (defcustom expenses-directory nil
   "Directory to save and look for the expense files."
