@@ -572,6 +572,11 @@ Optional argument USER for user name."
     (when (get-buffer buffer-name)
       (kill-buffer buffer-name))
     (with-current-buffer (generate-new-buffer buffer-name)
+      (when user
+	(insert (format "User: %s\n" (propertize user 'face 'expenses-face-message))))
+      (insert (format "From: %s\n" (propertize date-from 'face 'expenses-face-date)))
+      (insert (format "To: %s\n" (propertize date-to 'face 'expenses-face-date)))
+      (insert "----------------------------\n")
       (while (or (string< current date-to) (string-equal current date-to))
 	(let ((amount (expenses--get-expense-for-day current user)))
 	  (when amount
@@ -583,6 +588,9 @@ Optional argument USER for user name."
       (setq total-string (format "%s = %10s" (propertize "Total" 'face 'expenses-face-message) (propertize (number-to-string total) 'face 'expenses-face-expense)))
       (insert total-string)
       (align-regexp (point-min) (point-max) "\\(\\s-*\\)=")
+      (goto-line 4)
+      (align-regexp (point-min) (point) "\\(\\s-*\\):")
+      (end-of-buffer)
       (read-only-mode)
       (message total-string)
       (switch-to-buffer-other-window buffer-name))))
