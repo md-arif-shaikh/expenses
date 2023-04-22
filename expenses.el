@@ -45,18 +45,18 @@
   :type 'string
   :group 'expenses)
 
-(defcustom expenses-category-list nil
+(defcustom expenses-category-list '("Grocery" "Shopping" "Travel" "Subscription" "Health" "Electronics" "Entertainment" "Rent" "Salary" "Others")
   "List of categories for expenses."
   :type 'list
   :group 'expenses)
 
-(defcustom expenses-currency nil
-  "Currency."
+(defcustom expenses-currency "Rs."
+  "Default currency."
   :type 'string
   :group 'expenses)
 
-(defcustom expenses-month-names nil
-  "Month names."
+(defcustom expenses-month-names (mapcar #'car timezone-months-assoc)
+  "List of month names."
   :type 'list
   :group 'expenses)
 
@@ -107,11 +107,6 @@ Alist bank profiles.  Each element has the form
        :underline nil))
   "Face for message."
   :group 'expenses)
-
-(setq expenses-directory "~/Dropbox/Important_Works/Different Expenses/Monthly expenses/")
-(setq expenses-category-list '("Grocery" "Shopping" "Travel" "Subscription" "Health" "Electronics" "Entertainment" "Rent" "Salary" "Others"))
-(setq expenses-currency "Rs.")
-(setq expenses-month-names '("Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
 
 (defun expenses--create-user-directory-name (user)
   "Create user directory name based on USER."
