@@ -19,6 +19,7 @@
   - [[#expenses-calc-expense-for-month][expenses-calc-expense-for-month]]
   - [[#expenses-calc-expense-for-monthsexpenses-calc-expense-for-year][expenses-calc-expense-for-months/expenses-calc-expense-for-year]]
   - [[#expenses-calc-expense-by-category][expenses-calc-expense-by-category]]
+  - [[#expenses-pie-expense-for-month-filtered-by-categories][expenses-pie-expense-for-month-filtered-by-categories]]
 
 * About Expenses
 ~Expenses~ is an ~Emacs~ package to keep records of your expenses and view expenses conveniently.
@@ -103,27 +104,29 @@ a ~list~ of ~phrases~. Examples,
   (setq expenses-utils-ignore-phrases-list '("this is phrase one" "this is phrase 2"))
 #+END_SRC
 * Interactive functions
-|-------------------------------------------+----------------------------------------------------------------------|
-| Interactive functions                     | Actions                                                              |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-add-expense~                      | Add an expense entry                                                 |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-view-expense~                     | View expense file                                                    |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-for-day~             | Calculate expenses in a day                                          |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-for-month~           | Calculate expenses in a month                                        |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-for-months~          | Calculate expenses in a range of months                              |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-for-year~            | Calculate expenses in a year                                         |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-calc-expense-by-category~         | Calculate expenses in one or more category for a given date or month |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-import-expense~                   | Import expense from CSV files                                        |
-|-------------------------------------------+----------------------------------------------------------------------|
-| ~expenses-import-expense-with-bank-profile~ | Import expense from CSV files using user customized profiles         |
-|-------------------------------------------+----------------------------------------------------------------------|
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| Interactive functions                                 | Actions                                                              |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-add-expense~                                  | Add an expense entry                                                 |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-view-expense~                                 | View expense file                                                    |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-day~                         | Calculate expenses in a day                                          |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-month~                       | Calculate expenses in a month                                        |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-months~                      | Calculate expenses in a range of months                              |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-for-year~                        | Calculate expenses in a year                                         |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-calc-expense-by-category~                     | Calculate expenses in one or more category for a given date or month |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-import-expense~                               | Import expense from CSV files                                        |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-pie-expense-for-month-filtered-by-categories~ | Create a pie chart of expenses in different categories               |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-import-expense-with-bank-profile~             | Import expense from CSV files using user customized profiles         |
+|-------------------------------------------------------+----------------------------------------------------------------------|
 * Screenshots
 ** expenses-add-expense
 #+html: <div> <img src="./screenshots/add_expenses.gif"></div>
@@ -137,3 +140,5 @@ a ~list~ of ~phrases~. Examples,
 #+html: <div> <img src="./screenshots/months-year.png"></div>
 ** expenses-calc-expense-by-category
 #+html: <div> <img src="./screenshots/filter.png"></div>
+** expenses-pie-expense-for-month-filtered-by-categories
+#+html: <div> <img src="./screenshots/pie-month.png"></div>
