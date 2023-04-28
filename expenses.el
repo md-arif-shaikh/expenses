@@ -227,12 +227,14 @@ Looks for the last two existing files and collect the details."
       (insert (format "|%s |%.2f |%s |%s |\n" date amount category details))
       (when expenses-add-hline-in-org (insert "|--|--|--|--|\n"))
       (append-to-file (point-min) (point-max) file-name))
-    (when (string-equal (completing-read "Add another expense: " '("no" "yes")) "yes")
+    (when (string-equal (completing-read "Add another expense: " '("yes" "no")) "yes")
       (expenses-add-expense user))
     (with-current-buffer (find-file-noselect file-name)
       (goto-char (point-max))
       (forward-line -1)
       (org-table-align)
+      (org-table-goto-column 0)
+      (org-table-sort-lines nil ?a)
       (write-file file-name))))
 
 (defun expenses-view-expense (user)
@@ -936,5 +938,26 @@ Column number starts with 0, i.e., second column has column no 1."
 	  (category-col (nth 5 profile)))
      (expenses-import-expense file-name sep date-col debit-col date-format narrative-col category-col)))
 
+(defun expenses-sort-and-save-table-by-dates (date &optional user)
+  "Sort the expense table for a given DATE and USER by entry dates."
+  (interactive
+   (let ((date (org-read-date nil nil nil "Date: "))
+	 (user (completing-read "Select user: " (expenses-users))))
+     (list date user)))
+  (let* ((file-name (expenses--get-file-name date user)))
+    (unless (file-exists-p file-name)
+      (let* ((seconds (org-time-string-to-seconds date))
+	     (month (format-time-string "%B" seconds))
+	     (year (format-time-string "%Y" seconds)))
+	(user-error (format "No expense file for %s %s exists!" month year))))
+    (with-current-buffer (find-file-noselect file-name)
+      (expenses--goto-table-begin "expenses")
+      (forward-line 2)
+      (org-table-next-row)
+      (org-table-goto-column 0)
+      (org-table-sort-lines nil ?a)
+      (write-file file-name)
+      (message "Saved file sorting by dates."))))
+	
 (provide 'expenses)
 ;;; expenses.el ends here
