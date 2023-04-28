@@ -938,6 +938,7 @@ Column number starts with 0, i.e., second column has column no 1."
 	  (category-col (nth 5 profile)))
      (expenses-import-expense file-name sep date-col debit-col date-format narrative-col category-col)))
 
+;;;###autoload
 (defun expenses-sort-and-save-table-by-dates (date &optional user)
   "Sort the expense table for a given DATE and USER by entry dates."
   (interactive
