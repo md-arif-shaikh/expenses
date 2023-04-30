@@ -71,6 +71,11 @@
   :type 'str
   :group 'expenses)
 
+(defcustom expenses-ask-for-quantity? t
+  "Whether to ask for quantity."
+  :type 'boolean
+  :group 'expenses)
+
 (defcustom expenses-bank-profiles nil
   "Set profile for bank to use for importing expenses.
 Alist bank profiles.  Each element has the form
@@ -218,13 +223,16 @@ Looks for the last two existing files and collect the details."
 	 (amount (read-number "Amount: "))
 	 (category (completing-read "Category: " expenses-category-list))
 	 (details (completing-read "Details: " (expenses--get-frequently-used-details-list date user)))
-	 (file-name (expenses--get-file-name date user)))
+	 (file-name (expenses--get-file-name date user))
+	 (quantity 1))
+    (when expenses-ask-for-quantity?
+      (setq quantity (read-number "Quantity: " 1)))
     (when (string-blank-p category)
       (setq category "Others"))
     (when (not (file-exists-p file-name))
       (expenses--create-initial-file date user))
     (with-temp-buffer
-      (insert (format "|%s |%.2f |%s |%s |\n" date amount category details))
+      (insert (format "|%s |%.2f |%s |%s |\n" date (* quantity amount) category details))
       (when expenses-add-hline-in-org (insert "|--|--|--|--|\n"))
       (append-to-file (point-min) (point-max) file-name))
     (when (string-equal (completing-read "Add another expense: " '("yes" "no")) "yes")
