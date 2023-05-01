@@ -7,7 +7,7 @@
 ;; Version: 0.1.0
 ;; Homepage: https://github.com/md-arif-shaikh/expenses
 ;; URL: https://github.com/md-arif-shaikh/expenses
-;; Package-Requires: ((emacs "26.1") (dash "2.19.1") (ht "2.3"))
+;; Package-Requires: ((emacs "28.1") (dash "2.19.1") (ht "2.3"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -973,7 +973,7 @@ Column number starts with 0, i.e., second column has column no 1."
       (let* ((seconds (org-time-string-to-seconds date))
 	     (month (format-time-string "%B" seconds))
 	     (year (format-time-string "%Y" seconds)))
-	(user-error (format "No expense file for %s %s exists!" month year))))
+	(user-error "No expense file for %s %s exists!" month year)))
     (with-current-buffer (find-file-noselect file-name)
       (expenses--goto-table-begin "expenses")
       (forward-line 2)
