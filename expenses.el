@@ -76,6 +76,11 @@
   :type 'boolean
   :group 'expenses)
 
+(defcustom expenses-default-user-name ""
+  "Default user name."
+  :type 'str
+  :group 'expenses)
+
 (defcustom expenses-bank-profiles nil
   "Set profile for bank to use for importing expenses.
 Alist bank profiles.  Each element has the form
@@ -116,14 +121,14 @@ Alist bank profiles.  Each element has the form
 
 (defun expenses--create-user-directory-name (user)
   "Create user directory name based on USER."
-  (if user
-      (concat (downcase (replace-regexp-in-string " " "_" user)) "/")
-    ""))
+  (downcase (replace-regexp-in-string " " "_" (if user
+						  user
+						expenses-default-user-name))))
 
 (defun expenses--get-file-name (date &optional user)
   "Get the name of file from the DATE.  Optionally provide USER name."
   (let ((year-month (substring date 0 7)))
-    (concat expenses-directory (expenses--create-user-directory-name user) year-month "-" "expenses.org")))
+    (file-name-concat expenses-directory (expenses--create-user-directory-name user) (concat year-month "-" "expenses.org"))))
 
 (defun expenses--get-date (file-name)
   "Get the date from a given FILE-NAME."
@@ -151,6 +156,7 @@ Alist bank profiles.  Each element has the form
 	(buff-name (concat (temporary-file-directory) "test.org"))
 	(details-string-list '()))
     (when (file-exists-p file-name)
+      (message file-name)
       (with-current-buffer (generate-new-buffer buff-name)
 	(insert-buffer-substring (find-file-noselect file-name))
 	(write-file buff-name)
@@ -218,7 +224,7 @@ Looks for the last two existing files and collect the details."
 
 (defun expenses-add-expense (user)
   "Add expense for an USER."
-  (interactive (list (completing-read "Add expenses for: " (expenses-users))))
+  (interactive (list (completing-read "Add expenses for: " (expenses-users) nil nil nil nil expenses-default-user-name)))
   (expenses-user-dir user)
   (let* ((date (org-read-date nil nil nil "Date: "))
 	 (amount (read-number "Amount: "))
@@ -248,14 +254,22 @@ Looks for the last two existing files and collect the details."
 
 (defun expenses-view-expense (user)
   "View expense for an USER."
-  (interactive (list (completing-read "View expenses for: " (expenses-users))))
+  (interactive (list (completing-read "View expenses for: " (expenses-users) nil nil nil nil expenses-default-user-name)))
   (let* ((date (org-read-date nil nil nil "Date: "))
 	 (file-name (expenses--get-file-name date user)))
+    (unless (file-exists-p (file-name-concat expenses-directory user))
+      (user-error "No user named %s exists!.  Create first with `expenses-add-expense`" user))
     (if (file-exists-p file-name)
 	(find-file-other-window file-name)
       (let ((month (format-time-string "%B" (org-time-string-to-seconds date)))
 	    (year (format-time-string "%Y" (org-time-string-to-seconds date))))
-	(message "No expense file is found for %s %s" month year)))))
+	(when (string-equal (completing-read (format "No expense file is found for %s %s. Open the user expense directory?" month year) '("yes" "no")) "yes")
+	  (dired-other-window (file-name-concat expenses-directory user)))))))
+
+(defun expenses-open-expense-directory ()
+  "Open expense directory."
+  (interactive)
+  (dired-other-window expenses-directory))
 
 (defun expenses--get-expense-for-file (file-name &optional table-name)
   "Calculate expenses for given FILE-NAME and TABLE-NAME."
