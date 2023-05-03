@@ -409,7 +409,7 @@ Optional argument USER for user name."
 (defun expenses-calc-expense-for-day-filtered-by-categories ()
   "Calculate expense for an USER, DATE and TABLE-NAME filtered by CATEGORIES and show in a buffer."
   (interactive)
-  (let* ((user (completing-read "Select user: " (expenses-users)))
+  (let* ((user (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name))
 	 (date (org-read-date nil nil nil "Date: "))
 	 (categories (expenses--ask-for-categories))
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
@@ -455,7 +455,7 @@ Optional argument USER for user name."
 (defun expenses-calc-expense-for-month-filtered-by-categories ()
   "Calculate expense for month filtered by categories and show result in a buffer."
   (interactive)
-  (let* ((user (completing-read "Select user: " (expenses-users)))
+  (let* ((user (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name))
 	 (date (org-read-date nil nil nil "Date: "))
 	 (categories (expenses--ask-for-categories))
 	 (month (format-time-string "%B" (org-time-string-to-seconds date)))
@@ -498,7 +498,7 @@ Optional argument USER for user name."
 (defun expenses-pie-expense-for-month-filtered-by-categories ()
   "Create a pie chart of expenses for month filtered by categories and show result in a buffer."
   (interactive)
-  (let* ((user (completing-read "Select user: " (expenses-users)))
+  (let* ((user (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name))
 	 (date (org-read-date nil nil nil "Date: "))
 	 (categories (expenses--ask-for-categories))
 	 (expenses (cl-loop for category in categories
@@ -524,7 +524,7 @@ Optional argument USER for user name."
 (defun expenses-calc-expense-for-year-filtered-by-categories ()
   "Calculate expense for a year filtered by categories and show result in a buffer."
   (interactive)
-  (let* ((user (completing-read "Select user: " (expenses-users)))
+  (let* ((user (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name))
 	 (year-now (string-to-number (format-time-string "%Y")))
 	 (year (completing-read "Enter year: " (mapcar (lambda (y) (format "%s" y)) (reverse (number-sequence (- year-now 10) year-now  1)))))
 	 (categories (expenses--ask-for-categories))
@@ -587,7 +587,7 @@ Optional argument USER for user name."
   (interactive
    (list (org-read-date nil nil nil "Date From: ")
 	 (org-read-date nil nil nil "Date To: ")
-	 (completing-read "Select user: " (expenses-users))))
+	 (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name)))
   (let ((buffer-name (format "*expenses-%s-%s-%s*" date-from date-to user))
 	(current date-from)
 	(total 0)
@@ -622,7 +622,7 @@ Optional argument USER for user name."
   "Calculate expense for DATE and optional USER, TABLE-NAME and show message."
   (interactive
    (list (org-read-date nil nil nil "Date: ")
-	 (completing-read "Select user: " (expenses-users))))
+	 (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name)))
   (let* ((month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
 	 (day (format-time-string "%d" (org-time-string-to-seconds date)))
@@ -652,7 +652,7 @@ Optional argument USER for user name."
   "Calculate expense for an USER in a month specified by any DATE in that month in format YYYY-MM-DD."
   (interactive
    (let ((date (org-read-date nil nil nil "Date: "))
-	 (user (completing-read "Select user: " (expenses-users))))
+	 (user (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name)))
      (list date user)))
   (let* ((month (format-time-string "%B" (org-time-string-to-seconds date)))
 	 (year (format-time-string "%Y" (org-time-string-to-seconds date)))
@@ -687,7 +687,7 @@ Optional argument USER for user name."
   (interactive
    (let* ((current-year (string-to-number (format-time-string "%Y")))
 	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num))))
-	  (user (completing-read "Select user: " (expenses-users)))
+	  (user (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name))
 	  (picked-start (1+ (-elem-index (completing-read "Start month: " expenses-month-names) expenses-month-names)))
 	  (picked-end (1+ (-elem-index (completing-read "End month: " expenses-month-names) expenses-month-names))))
      (list picked-year user picked-start picked-end)))
@@ -726,7 +726,7 @@ Optional argument USER for user name."
   (interactive
    (let* ((current-year (string-to-number (format-time-string "%Y")))
 	  (picked-year (completing-read "Enter year: " (cl-loop for year-num in (number-sequence current-year (- current-year 10) -1) collect (number-to-string year-num))))
-	  (user (completing-read "Select user: " (expenses-users))))
+	  (user (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name)))
      (list picked-year user)))
   (expenses-calc-expense-for-months year user))
 
@@ -964,7 +964,7 @@ Column number starts with 0, i.e., second column has column no 1."
   "Sort the expense table for a given DATE and USER by entry dates."
   (interactive
    (let ((date (org-read-date nil nil nil "Date: "))
-	 (user (completing-read "Select user: " (expenses-users))))
+	 (user (completing-read "Select user: " (expenses-users) nil nil nil nil expenses-default-user-name)))
      (list date user)))
   (let* ((file-name (expenses--get-file-name date user)))
     (unless (file-exists-p file-name)
