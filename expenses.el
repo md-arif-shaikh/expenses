@@ -222,12 +222,25 @@ Looks for the last two existing files and collect the details."
 	  (make-directory user-dir)))
     expenses-directory))
 
-(defun expenses-add-expense (user)
-  "Add expense for an USER."
-  (interactive (list (completing-read "Add expenses for: " (expenses-users) nil nil nil nil expenses-default-user-name)))
-  (expenses-user-dir user)
-  (let* ((date (org-read-date nil nil nil "Date: "))
-	 (amount (read-number "Amount: "))
+(defun expenses-add-multiple-expenses (user &optional date number-of-entries same-date?)
+  "Add multiple expenses for a USER.
+
+Optionally if DATE is provided then it will add entry for that otherwise ask
+for it.
+
+If NUMBER-OF-ENTRIES is non-nil then repeat that many entries
+before asking whether to stop.
+
+If SAME-DATE? is t then ask for date only
+once."
+  (interactive (let* ((user (completing-read "Add expenses for: " (expenses-users) nil nil nil nil expenses-default-user-name))
+		      (date (org-read-date nil nil nil "Date: "))
+		      (number-of-entries (read-number "Number of entries to add: " 1))
+		      (same-date? (if (equal number-of-entries 1)
+				    t
+				    (yes-or-no-p "Add for the same date? "))))
+		 (list user date number-of-entries same-date?)))
+  (let* ((amount (read-number "Amount: "))
 	 (category (completing-read "Category: " expenses-category-list))
 	 (details (completing-read "Details: " (expenses--get-frequently-used-details-list date user)))
 	 (file-name (expenses--get-file-name date user))
@@ -242,8 +255,10 @@ Looks for the last two existing files and collect the details."
       (insert (format "|%s |%.2f |%s |%s |\n" date (* quantity amount) category details))
       (when expenses-add-hline-in-org (insert "|--|--|--|--|\n"))
       (append-to-file (point-min) (point-max) file-name))
-    (when (string-equal (completing-read "Add another expense: " '("yes" "no")) "yes")
-      (expenses-add-expense user))
+    (unless (zerop (- number-of-entries 1))
+      (unless same-date?
+	  (setq date (org-read-date nil nil nil "Date: ")))
+      (expenses-add-multiple-expenses user date (- number-of-entries 1) same-date?))
     (with-current-buffer (find-file-noselect file-name)
       (goto-char (point-max))
       (forward-line -1)
@@ -251,6 +266,13 @@ Looks for the last two existing files and collect the details."
       (org-table-goto-column 0)
       (org-table-sort-lines nil ?a)
       (write-file file-name))))
+
+(defun expenses-add-expense (user date)
+  "Add a single entry for a USER for a given DATE."
+  (interactive
+   (list (completing-read "Add expenses for: " (expenses-users) nil nil nil nil expenses-default-user-name)
+	 (org-read-date nil nil nil "Date: ")))
+  (expenses-add-multiple-expenses user date 1))
 
 (defun expenses-view-expense (user)
   "View expense for an USER."
