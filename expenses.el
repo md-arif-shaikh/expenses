@@ -46,7 +46,7 @@
   :type 'string
   :group 'expenses)
 
-(defcustom expenses-category-list '("Grocery" "Shopping" "Travel" "Subscription" "Health" "Electronics" "Entertainment" "Rent" "Salary" "Others")
+(defcustom expenses-category-list '("Grocery" "Shopping" "Travel" "Subscription" "Health" "Electronics" "Entertainment" "Rent" "Salary" "Hotel" "Others")
   "List of categories for expenses."
   :type 'list
   :group 'expenses)
@@ -200,6 +200,9 @@ Looks for the last two existing files and collect the details."
   (let ((file-name (expenses--get-file-name date user))
 	(month (format-time-string "%B" (org-time-string-to-seconds date)))
 	(year (format-time-string "%Y" (org-time-string-to-seconds date))))
+    ;;; create directory for user if it does not exist
+    (unless (member user (expenses-users))
+      (expenses-user-dir user))
     (with-temp-buffer
       (insert (format "#+TITLE: Expenses for %s %s\n\n" month year))
       (insert "* Expenses\n")
