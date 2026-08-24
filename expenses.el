@@ -4,10 +4,10 @@
 
 ;; Author: Md Arif Shaikh <arifshaikh.astro@gmail.com>
 ;; Keywords: expense tracking, convenience
-;; Version: 0.1.0
+;; Version: 1.0.0
 ;; Homepage: https://github.com/md-arif-shaikh/expenses
 ;; URL: https://github.com/md-arif-shaikh/expenses
-;; Package-Requires: ((emacs "28.1") (dash "2.19.1") (ht "2.3"))
+;; Package-Requires: ((emacs "28.1") (dash "2.19.1") (ht "2.3") (transient "0.3.7"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -37,9 +37,12 @@
 
 ;;; Code:
 (require 'org)
+(require 'cl-lib)
+(require 'subr-x)
 (require 'dash)
 (require 'expenses-utils)
 (require 'timezone)
+(require 'time-date)
 
 (defcustom expenses-directory nil
   "Directory to save and look for the expense files."
@@ -48,7 +51,7 @@
 
 (defcustom expenses-category-list '("Grocery" "Shopping" "Travel" "Subscription" "Health" "Electronics" "Entertainment" "Rent" "Salary" "Hotel" "Others")
   "List of categories for expenses."
-  :type 'list
+  :type '(repeat string)
   :group 'expenses)
 
 (defcustom expenses-currency "Rs."
@@ -58,7 +61,7 @@
 
 (defcustom expenses-month-names (mapcar #'car timezone-months-assoc)
   "List of month names."
-  :type 'list
+  :type '(repeat string)
   :group 'expenses)
 
 (defcustom expenses-add-hline-in-org nil
@@ -68,7 +71,7 @@
 
 (defcustom expenses-python-path "~/miniconda3/bin/python"
   "Path to python."
-  :type 'str
+  :type 'string
   :group 'expenses)
 
 (defcustom expenses-ask-for-quantity? t
@@ -78,7 +81,7 @@
 
 (defcustom expenses-default-user-name ""
   "Default user name."
-  :type 'str
+  :type 'string
   :group 'expenses)
 
 (defcustom expenses-bank-profiles nil
@@ -212,18 +215,31 @@ Looks for the last two existing files and collect the details."
       (insert "|--|--|--|--|\n")
       (append-to-file (point-min) (point-max) file-name))))
 
+(defun expenses--check-directory ()
+  "Signal a user error unless `expenses-directory' is usable."
+  (unless (and expenses-directory (stringp expenses-directory))
+    (user-error "Set `expenses-directory' first, e.g. (setq expenses-directory \"~/expenses/\")"))
+  (unless (file-directory-p expenses-directory)
+    (make-directory expenses-directory t))
+  expenses-directory)
+
 (defun expenses-users ()
   "Get the list of users."
-  (directory-files expenses-directory nil directory-files-no-dot-files-regexp))
+  (expenses--check-directory)
+  (seq-filter (lambda (f)
+		(file-directory-p (file-name-concat expenses-directory f)))
+	      (directory-files expenses-directory nil directory-files-no-dot-files-regexp)))
 
 (defun expenses-user-dir (user)
-  "Get directory for USER."
-  (if user
-      (let ((user-dir (concat expenses-directory user)))
-	(unless (file-exists-p user-dir)
-	  (setq user-dir (concat expenses-directory (expenses--create-user-directory-name user)))
-	  (make-directory user-dir)))
-    expenses-directory))
+  "Get directory for USER, creating it when missing."
+  (expenses--check-directory)
+  (let ((user-dir (if (and user (not (string-blank-p user)))
+		      (file-name-concat expenses-directory
+					(expenses--create-user-directory-name user))
+		    expenses-directory)))
+    (unless (file-directory-p user-dir)
+      (make-directory user-dir t))
+    user-dir))
 
 (defun expenses-add-multiple-expenses (user &optional date number-of-entries same-date?)
   "Add multiple expenses for a USER.
@@ -282,8 +298,9 @@ once."
   (interactive (list (completing-read "View expenses for: " (expenses-users) nil nil nil nil expenses-default-user-name)))
   (let* ((date (org-read-date nil nil nil "Date: "))
 	 (file-name (expenses--get-file-name date user)))
-    (unless (file-exists-p (file-name-concat expenses-directory user))
-      (user-error "No user named %s exists!.  Create first with `expenses-add-expense`" user))
+    (unless (file-directory-p (file-name-concat expenses-directory
+						(expenses--create-user-directory-name user)))
+      (user-error "No user named %s exists!  Create one first with `expenses-add-expense'" user))
     (if (file-exists-p file-name)
 	(find-file-other-window file-name)
       (let ((month (format-time-string "%B" (org-time-string-to-seconds date)))
@@ -1006,5 +1023,100 @@ Column number starts with 0, i.e., second column has column no 1."
       (write-file file-name)
       (message "Saved file sorting by dates."))))
 	
+;;; Data layer -----------------------------------------------------------
+;; A fast, pure-elisp view over the org tables.  The older calculation
+;; commands drive org's table formulas through temporary files; everything
+;; new (the dashboard, the transient menu) reads through the functions
+;; below instead, which parse the tables directly.
+
+(cl-defstruct (expenses-entry (:constructor expenses-entry-create)
+			      (:copier nil))
+  "A single expense record."
+  date amount category details user file)
+
+(defun expenses--parse-file (file &optional user)
+  "Parse expense entries out of FILE, tagging each one with USER."
+  (when (file-readable-p file)
+    (let (entries)
+      (with-temp-buffer
+	(insert-file-contents file)
+	(goto-char (point-min))
+	(while (not (eobp))
+	  (let ((line (buffer-substring-no-properties
+		       (line-beginning-position) (line-end-position))))
+	    (when (and (string-prefix-p "|" (string-trim-left line))
+		       (not (string-match-p "\\`[ \t]*|[-+|]" line)))
+	      (let ((fields (mapcar #'string-trim
+				    (split-string (string-trim line "|" "|") "|"))))
+		(when (and (>= (length fields) 3)
+			   ;; skip the header row
+			   (string-match-p "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}"
+					   (nth 0 fields)))
+		  (push (expenses-entry-create
+			 :date (substring (nth 0 fields) 0 10)
+			 :amount (string-to-number (nth 1 fields))
+			 :category (let ((c (nth 2 fields)))
+				     (if (string-blank-p c) "Others" c))
+			 :details (or (nth 3 fields) "")
+			 :user user
+			 :file file)
+			entries)))))
+	  (forward-line)))
+      (nreverse entries))))
+
+(defun expenses-user-files (user)
+  "Return the expense files belonging to USER, oldest first."
+  (let ((dir (file-name-concat expenses-directory
+			       (expenses--create-user-directory-name user))))
+    (when (file-directory-p dir)
+      (sort (directory-files dir t "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-expenses\\.org\\'")
+	    #'string<))))
+
+(defun expenses--date<= (a b)
+  "Return non-nil when date string A is not later than B."
+  (or (string= a b) (string< a b)))
+
+(defun expenses-entries (user &optional from to)
+  "Return USER's entries between dates FROM and TO inclusive.
+FROM and TO are YYYY-MM-DD strings; either may be nil for open-ended."
+  (let (entries)
+    (dolist (file (expenses-user-files user))
+      ;; The file name carries YYYY-MM, so whole months can be skipped cheaply.
+      (let ((ym (substring (file-name-nondirectory file) 0 7)))
+	(when (and (or (null from) (expenses--date<= (substring from 0 7) ym))
+		   (or (null to) (expenses--date<= ym (substring to 0 7))))
+	  (setq entries (nconc entries (expenses--parse-file file user))))))
+    (seq-filter (lambda (e)
+		  (let ((d (expenses-entry-date e)))
+		    (and (or (null from) (expenses--date<= from d))
+			 (or (null to) (expenses--date<= d to)))))
+		entries)))
+
+(defun expenses-total (entries)
+  "Sum the amounts of ENTRIES."
+  (apply #'+ (mapcar #'expenses-entry-amount entries)))
+
+(defun expenses-group-by (entries key-fn)
+  "Group ENTRIES by KEY-FN and return an alist of (KEY . TOTAL), largest first."
+  (let ((table (make-hash-table :test #'equal)))
+    (dolist (e entries)
+      (let ((k (funcall key-fn e)))
+	(puthash k (+ (gethash k table 0) (expenses-entry-amount e)) table)))
+    (sort (let (acc) (maphash (lambda (k v) (push (cons k v) acc)) table) acc)
+	  (lambda (a b) (> (cdr a) (cdr b))))))
+
+(defun expenses-format-amount (amount)
+  "Format AMOUNT with the configured currency."
+  (format "%s %.2f" (or expenses-currency "") amount))
+
+(defun expenses-month-bounds (date)
+  "Return (FIRST . LAST) day strings of the month containing DATE."
+  (let* ((decoded (decode-time (org-time-string-to-seconds date)))
+	 (month (nth 4 decoded))
+	 (year (nth 5 decoded))
+	 (last-day (date-days-in-month year month)))
+    (cons (format "%04d-%02d-01" year month)
+	  (format "%04d-%02d-%02d" year month last-day))))
+
 (provide 'expenses)
 ;;; expenses.el ends here

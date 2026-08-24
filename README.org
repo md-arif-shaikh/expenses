@@ -12,6 +12,8 @@
   - [[#auto-assign-categories][Auto assign categories]]
   - [[#override-phrases-and-keywords][Override phrases and keywords]]
   - [[#ignore-transaction][Ignore transaction]]
+- [[#the-transient-menu][The transient menu]]
+- [[#the-dashboard][The dashboard]]
 - [[#interactive-functions][Interactive functions]]
 - [[#screenshots][Screenshots]]
   - [[#expenses-add-expense][expenses-add-expense]]
@@ -30,6 +32,8 @@
  - For each month, a separate ~org~ file is created with the year and month as a prefix to the file names.
  - It uses the ~org-table~ formulas to calculate expenses for the given period.
  - Expenses could be tracked per user basis
+ - A ~transient~ menu, ~expenses-menu~, gathers every command in one place
+ - A dashboard, ~expenses-dashboard~, shows a period at a glance: total, per-category breakdown and the individual entries
 
 * How to install
 ~Expenses~ is available in [[https://melpa.org/][MELPA]]. With ~use-package~ you can do something like
@@ -56,6 +60,54 @@ or if you use ~straight~ then
   #+BEGIN_SRC emacs-lisp
     (setq expenses-currency "$")
   #+END_SRC
+
+* The transient menu
+Everything the package does is reachable from a single ~transient~ menu.
+#+BEGIN_SRC emacs-lisp
+  (use-package expenses
+    :ensure t
+    :bind ("C-c e" . expenses-menu))
+#+END_SRC
+The top level offers recording, viewing and the dashboard, with sub-menus for
+reports (~r~) and importing bank statements (~i~). The menu shows where the
+expense files live and what the dashboard is currently displaying.
+
+* The dashboard
+~M-x expenses-dashboard~ opens a buffer for one user and one period. It shows
+a summary line (total, number of entries, average per day), a per-category
+breakdown with bars, and the entries themselves in a sortable table.
+
+Nothing in the dashboard needs a fresh round of prompts: the period, the date,
+the user and the category filter can all be changed in place.
+
+Two rows of clickable controls sit at the top of the buffer: the period
+navigation and the four period lengths (the current one is highlighted), then
+the date, user, category, add, refresh and menu commands.  Click one with the
+mouse, or move point onto it and press ~RET~.  Each control shows the key that
+runs it, so the toolbar doubles as the keymap:
+
+#+begin_example
+ p <   n >   D day   M month   Y year   A all
+ d date   u user   c category   a add   g refresh   ? menu
+#+end_example
+
+|-----+---------------------------------------------|
+| Key | Action                                      |
+|-----+---------------------------------------------|
+| ~n~ / ~p~ | Next / previous period                      |
+| ~P~   | Change period (day, month, year, all)       |
+| ~D~ / ~M~ / ~Y~ / ~A~ | Show a day / month / year / everything       |
+| ~d~   | Jump to a date                              |
+| ~u~   | Switch user (empty input means all users)   |
+| ~c~   | Filter by one or more categories            |
+| ~a~   | Add an expense and refresh                  |
+| ~RET~ | Open the org file at the entry under point  |
+| ~g~   | Re-read the files and redraw                |
+| ~?~   | Open the transient menu                     |
+|-----+---------------------------------------------|
+
+The dashboard reads the org tables directly rather than going through the
+~org-table~ formulas, so it stays fast over many months of data.
 
 * Importing Bank Statements
 You can import directly from Bank CSV exports using ~expenses-import-expense~. Example CSV export from a bank
@@ -106,6 +158,10 @@ a ~list~ of ~phrases~. Examples,
 * Interactive functions
 |-------------------------------------------------------+----------------------------------------------------------------------|
 | Interactive functions                                 | Actions                                                              |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-menu~                                         | Transient menu with every command                                    |
+|-------------------------------------------------------+----------------------------------------------------------------------|
+| ~expenses-dashboard~                                    | Dashboard for a user and a period                                    |
 |-------------------------------------------------------+----------------------------------------------------------------------|
 | ~expenses-add-expense~                                  | Add an expense entry                                                 |
 |-------------------------------------------------------+----------------------------------------------------------------------|

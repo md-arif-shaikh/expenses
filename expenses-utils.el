@@ -36,12 +36,12 @@
 
 (defcustom expenses-utils-ignore-keywords-list nil
   "List of keywords to ignore transactions."
-  :type 'list
+  :type '(repeat string)
   :group 'expenses)
 
 (defcustom expenses-utils-ignore-phrases-list nil
   "List of phrases to ignore."
-  :type 'list
+  :type '(repeat string)
   :group 'expenses)
 
 (defcustom expenses-utils-phrases-alist nil
