@@ -95,7 +95,8 @@
    ["Record"
     ("a" "add an expense" expenses-add-expense)
     ("A" "add several expenses" expenses-add-multiple-expenses)
-    ("s" "sort a month's table by date" expenses-sort-and-save-table-by-dates)]
+    ("s" "sort a month's table by date" expenses-sort-and-save-table-by-dates)
+    ("b" "set a budget" expenses-set-budget)]
    ["View"
     ("v" "dashboard" expenses-dashboard)
     ("o" "open a month's org file" expenses-view-expense)

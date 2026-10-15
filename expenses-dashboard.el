@@ -87,6 +87,9 @@ One of the symbols `day', `month', `year' or `all'."
   "Categories to include, or nil for all of them.")
 (defvar-local expenses-dashboard--entries nil
   "Entries currently shown, as `expenses-entry' structs.")
+(defvar-local expenses-dashboard--budget nil
+  "Budget of the shown user as (BUDGET . SPENT), or nil when there is none.
+SPENT covers every entry of the user, whatever the period or filter.")
 
 (defconst expenses-dashboard--buffer-name "*Expenses Dashboard*")
 
@@ -199,6 +202,10 @@ It is drawn as selected while the dashboard is showing PERIOD."
 	   (lambda () (call-interactively #'expenses-dashboard-filter-categories))
 	   expenses-dashboard--categories)
 	  (expenses-dashboard--button
+	   "B" "budget" "Set the budget for the shown user"
+	   (lambda () (call-interactively #'expenses-dashboard-set-budget))
+	   expenses-dashboard--budget)
+	  (expenses-dashboard--button
 	   "a" "add" "Record a new expense"
 	   (lambda () (call-interactively #'expenses-dashboard-add-expense)))
 	  (expenses-dashboard--button
@@ -209,6 +216,23 @@ It is drawn as selected while the dashboard is showing PERIOD."
 	   (lambda () (call-interactively #'expenses-menu))))
     " ")
    "\n\n"))
+
+(defun expenses-dashboard--budget-line ()
+  "Describe the budget of the shown user, or return \"\" when there is none."
+  (if (not expenses-dashboard--budget)
+      ""
+    (let* ((budget (car expenses-dashboard--budget))
+	   (spent (cdr expenses-dashboard--budget))
+	   (left (- budget spent))
+	   (over (< left 0)))
+      (format "%s %s  spent %s (%.1f%%)  %s %s\n"
+	      (propertize "budget" 'face 'expenses-face-message)
+	      (expenses-dashboard--bar (min 1 (/ spent budget)))
+	      (expenses-format-amount spent)
+	      (* 100 (/ spent budget))
+	      (if over "over by" "remaining")
+	      (propertize (expenses-format-amount (abs left))
+			  'face (if over 'error 'expenses-face-expense))))))
 
 (defun expenses-dashboard--header ()
   "Build the header shown above the entry list."
@@ -231,6 +255,7 @@ It is drawn as selected while the dashboard is showing PERIOD."
 	     (if (> days 0)
 		 (format "   avg %s/day" (expenses-format-amount (/ total days)))
 	       ""))
+     (expenses-dashboard--budget-line)
      (if expenses-dashboard--categories
 	 (format "filter: %s\n" (string-join expenses-dashboard--categories ", "))
        "")
@@ -262,6 +287,12 @@ It is drawn as selected while the dashboard is showing PERIOD."
 		     (lambda (e) (member (expenses-entry-category e)
 					 expenses-dashboard--categories))
 		     entries)))
+    (setq expenses-dashboard--budget
+	  (let ((budget (and (= (length users) 1)
+			     (expenses-budget (car users)))))
+	    (when (and budget (> budget 0))
+	      (cons (float budget)
+		    (expenses-total (expenses-entries (car users)))))))
     (setq expenses-dashboard--entries
 	  (sort entries (lambda (a b) (string< (expenses-entry-date a)
 					       (expenses-entry-date b)))))
@@ -339,6 +370,19 @@ It is drawn as selected while the dashboard is showing PERIOD."
   (setq expenses-dashboard--categories (and categories (delete "" categories)))
   (expenses-dashboard--refresh))
 
+(defun expenses-dashboard-set-budget (amount)
+  "Set the budget of the shown user to AMOUNT; 0 removes it."
+  (interactive
+   (progn
+     (when (string-blank-p (or expenses-dashboard--user ""))
+       (user-error "Pick a single user with `u' before setting a budget"))
+     (list (read-number (format "Budget for %s (0 to remove): "
+				expenses-dashboard--user)
+			(or (car expenses-dashboard--budget) 0))))
+   expenses-dashboard-mode)
+  (expenses-set-budget expenses-dashboard--user amount)
+  (expenses-dashboard--refresh))
+
 (defun expenses-dashboard-visit-entry ()
   "Open the org file backing the entry at point, on its own line."
   (interactive nil expenses-dashboard-mode)
@@ -397,6 +441,7 @@ It is drawn as selected while the dashboard is showing PERIOD."
 		   ("u" . expenses-dashboard-set-user)
 		   ("c" . expenses-dashboard-filter-categories)
 		   ("a" . expenses-dashboard-add-expense)
+		   ("B" . expenses-dashboard-set-budget)
 		   ("RET" . expenses-dashboard-visit-entry)
 		   ("?" . expenses-menu)))
   (define-key expenses-dashboard-mode-map

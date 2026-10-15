@@ -1109,6 +1109,48 @@ FROM and TO are YYYY-MM-DD strings; either may be nil for open-ended."
   "Format AMOUNT with the configured currency."
   (format "%s %.2f" (or expenses-currency "") amount))
 
+;;; Budgets --------------------------------------------------------------
+;; A user directory can double as a project (a trip, say) with a budget.
+;; The budget lives in budget.org inside that directory, as a line
+;; "#+BUDGET: AMOUNT", so it travels with the expense files.
+
+(defun expenses--budget-file (user)
+  "Return the budget file for USER."
+  (file-name-concat expenses-directory
+		    (expenses--create-user-directory-name user)
+		    "budget.org"))
+
+(defun expenses-budget (user)
+  "Return USER's budget as a number, or nil when none is set."
+  (let ((file (expenses--budget-file user)))
+    (when (file-readable-p file)
+      (with-temp-buffer
+	(insert-file-contents file)
+	(goto-char (point-min))
+	(when (re-search-forward
+	       "^#\\+BUDGET:[ \t]*\\([0-9.]+\\)" nil t)
+	  (string-to-number (match-string 1)))))))
+
+;;;###autoload
+(defun expenses-set-budget (user amount)
+  "Set USER's budget to AMOUNT.  A non-positive AMOUNT removes it."
+  (interactive
+   (let ((user (completing-read "Budget for: " (expenses-users) nil nil nil nil
+				expenses-default-user-name)))
+     (list user
+	   (read-number (format "Budget for %s (0 to remove): " user)
+			(or (expenses-budget user) 0)))))
+  (expenses-user-dir user)
+  (let ((file (expenses--budget-file user)))
+    (if (<= amount 0)
+	(when (file-exists-p file)
+	  (delete-file file)
+	  (message "Removed the budget for %s" user))
+      (with-temp-file file
+	(insert (format "#+TITLE: Budget for %s\n#+BUDGET: %s\n"
+			user (number-to-string amount))))
+      (message "Budget for %s set to %s" user (expenses-format-amount amount)))))
+
 (defun expenses-month-bounds (date)
   "Return (FIRST . LAST) day strings of the month containing DATE."
   (let* ((decoded (decode-time (org-time-string-to-seconds date)))
