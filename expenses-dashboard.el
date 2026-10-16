@@ -394,9 +394,13 @@ It is drawn as selected while the dashboard is showing PERIOD."
       (beginning-of-line))))
 
 (defun expenses-dashboard-add-expense ()
-  "Add an expense, then refresh the dashboard."
+  "Add an expense for the shown user, then refresh the dashboard.
+When the dashboard shows every user, ask whom the expense is for."
   (interactive nil expenses-dashboard-mode)
-  (call-interactively #'expenses-add-expense)
+  (if (string-blank-p (or expenses-dashboard--user ""))
+      (call-interactively #'expenses-add-expense)
+    (expenses-add-expense expenses-dashboard--user
+			  (org-read-date nil nil nil "Date: ")))
   (expenses-dashboard--refresh))
 
 (defun expenses-dashboard-show-day ()
@@ -453,7 +457,8 @@ It is drawn as selected while the dashboard is showing PERIOD."
 	[("Date" 12 t)
 	 ("Amount" 12 (lambda (a b)
 			(< (expenses-entry-amount (cdr (car a)))
-			   (expenses-entry-amount (cdr (car b))))))
+			   (expenses-entry-amount (cdr (car b)))))
+	  :right-align t :pad-right 3)
 	 ("Category" 16 t)
 	 ("Details" 0 t)])
   (setq tabulated-list-padding 2)
